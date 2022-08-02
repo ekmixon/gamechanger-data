@@ -48,10 +48,7 @@ def process_ent(ent: str) -> t.Union[t.List[str], str]:
     if "......." in ent:
         ent = ent.split(".....")[0]
     new_ent = expand_abbreviations_no_context(ent, dic=get_abbcount_dict())
-    if len(new_ent) > 0:
-        return new_ent[0]
-    else:
-        return ent
+    return new_ent[0] if len(new_ent) > 0 else ent
 
 
 def process_query(query: str) -> None:
@@ -79,9 +76,8 @@ class Neo4jPublisher:
     def process_json(self, filepath: str, q: mp.Queue) -> str:
         with open(filepath) as f:
             j = json.load(f)
-            o = {}
+            o = {"id": j.get("id", "")}
 
-            o["id"] = j.get("id", "")
             o["doc_num"] = j.get("doc_num", "")
             o["doc_type"] = j.get("doc_type", "")
             o["display_title_s"] = j.get("display_title_s", "")
@@ -117,25 +113,22 @@ class Neo4jPublisher:
 
             process_query('CALL policy.createDocumentNodesFromJson(' + json.dumps(json.dumps(o)) + ')')
 
-            # # TODO responsibilities
-            # text = j["text"]
-            # self.process_responsibilities(text)
+                # # TODO responsibilities
+                # text = j["text"]
+                # self.process_responsibilities(text)
 
-            # TODO paragraphs
-            # self.process_paragraphs(j, doc_id)
+                # TODO paragraphs
+                # self.process_paragraphs(j, doc_id)
 
         q.put(1)
         return id
 
     def process_responsibilities(self, text: str) -> None:
-        resp = get_responsibilities(text, agencies=get_agency_names())
-        if resp:
+        if resp := get_responsibilities(text, agencies=get_agency_names()):
             for d in resp.values():
-                ent = d["Agency"]
-                resps = d["Responsibilities"]
-                if ent:
-                    filtered_ent = self.filter_ents(ent.strip())
-                    if filtered_ent:
+                if ent := d["Agency"]:
+                    resps = d["Responsibilities"]
+                    if filtered_ent := self.filter_ents(ent.strip()):
                         for r in resps:
                             process_query(
                                 'MATCH (e: Entity) WHERE toLower(e.name) = \"'
@@ -165,7 +158,7 @@ class Neo4jPublisher:
         )
 
     def process_paragraphs(self, j: t.Dict[str, t.Any], doc_id: str) -> None:
-        for idx, p in enumerate(j["paragraphs"]):
+        for p in j["paragraphs"]:
             process_query(
                 'MERGE (a: Document {doc_id: \"'
                 + doc_id
@@ -257,10 +250,7 @@ class Neo4jPublisher:
         if len(name_df):
             return name_df.iloc[0, 1]
         else:
-            if new_ent in self.crowdsourcedEnts:
-                return new_ent
-            else:
-                return ""
+            return new_ent if new_ent in self.crowdsourcedEnts else ""
 
     def process_crowdsourced_ents(self, without_web_scraping: bool, infobox_dir: t.Optional[str] = None):
         # check that if no web scraping, we have infobox-dir defined.
@@ -298,11 +288,7 @@ class Neo4jPublisher:
             else:
                 info = wu.get_infobox_info(ent)
 
-            if 'Redirect_Name' in info.keys():
-                name = info['Redirect_Name']
-            else:
-                name = ent
-
+            name = info['Redirect_Name'] if 'Redirect_Name' in info.keys() else ent
             # s is the insert statement for this entity's node
             s = 'MERGE (e:Entity {name: \"' + self._normalize_string(name) + '\"})  '
 
@@ -319,8 +305,10 @@ class Neo4jPublisher:
                         # find if the value is a node that already exists. if it is, add a relationship using key
                         # as the relation
                         # create rule for child_agency/child_agencies
-                        if self._normalize_string(key) == 'Child_agencies' or self._normalize_string(
-                                key) == 'Child_agency':
+                        if self._normalize_string(key) in [
+                            'Child_agencies',
+                            'Child_agency',
+                        ]:
                             rel = 'HAS_CHILD'
                         else:
                             rel = key
@@ -331,14 +319,15 @@ class Neo4jPublisher:
                         r = 'MATCH (e:Entity) where e.name =~ \"(?i)' + self._normalize_string(name) + '\"  '
 
                     # must unwind the list to add to neo4j as a param ([1,2,3] -> '1;2;3')
-                    ins = ''
-                    for el in info[key]:
-                        ins += el + '; '
+                    ins = ''.join(el + '; ' for el in info[key])
                     ins = ins[:-2]
 
                 else:
                     # create rule for child_agency/child_agencies
-                    if self._normalize_string(key) == 'Child_agencies' or self._normalize_string(key) == 'Child_agency':
+                    if self._normalize_string(key) in [
+                        'Child_agencies',
+                        'Child_agency',
+                    ]:
                         rel = 'HAS_CHILD'
                     else:
                         rel = key

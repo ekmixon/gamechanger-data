@@ -6,8 +6,7 @@ def extract_pds(data_conf_filter: dict, data: dict, extensions_metadata: dict):
     extracted_data_eda_n = {}
     format_supplementary_data(data, date_fields_l)
 
-    modification_number = populate_modification(data)
-    if modification_number:
+    if modification_number := populate_modification(data):
         extracted_data_eda_n["modification_number_eda_ext"] = modification_number
 
     award_id, referenced_idv = populate_award_id_referenced_idv(data, extensions_metadata)
@@ -56,12 +55,10 @@ def extract_pds(data_conf_filter: dict, data: dict, extensions_metadata: dict):
     if signature_date:
         extracted_data_eda_n["signature_date_eda_ext_dt"] = signature_date
 
-    total_obligated_amount = populate_total_obligated_amount(data)
-    if total_obligated_amount:
+    if total_obligated_amount := populate_total_obligated_amount(data):
         extracted_data_eda_n["total_obligated_amount_eda_ext_f"] = total_obligated_amount
 
-    naics = populate_naics(data)
-    if naics:
+    if naics := populate_naics(data):
         extracted_data_eda_n["naics_eda_ext"] = naics
 
     return {"extracted_data_eda_n": extracted_data_eda_n}
@@ -71,8 +68,7 @@ def extract_pds(data_conf_filter: dict, data: dict, extensions_metadata: dict):
 def populate_modification(data: dict) -> str:
     if "metadata_eda_ext_n" in data:
         metadata = data.get("metadata_eda_ext_n")
-        modification_number = metadata.get("modification_eda_ext")
-        if modification_number:
+        if modification_number := metadata.get("modification_eda_ext"):
             return modification_number
         else:
             return "Award"
@@ -93,10 +89,6 @@ def populate_award_id_referenced_idv(data: dict, extensions_metadata: dict) -> (
         if order_number and contract_number:
             referenced_idv = extensions_metadata.get("pds_contract_eda_ext")
             award_id = extensions_metadata.get("pds_ordernum_eda_ext")
-        elif order_number and contract_number:
-            award_id = extensions_metadata.get("pds_ordernum_eda_ext")
-        elif order_number and contract_number:
-            award_id = extensions_metadata.get("pds_contract_eda_ext")
     return award_id, referenced_idv
 
 
@@ -132,9 +124,12 @@ def populate_address(data) -> (str, str, str, str):
 def populate_vendor(data: dict) -> (str, str, str):
     row_ids = []
     if "address_details_eda_ext_n" in data:
-        for address_detail in data["address_details_eda_ext_n"]:
-            if address_detail.get("address_desc_eda_ext") == "Contractor":
-                row_ids.append(address_detail.get("row_id_eda_ext"))
+        row_ids.extend(
+            address_detail.get("row_id_eda_ext")
+            for address_detail in data["address_details_eda_ext_n"]
+            if address_detail.get("address_desc_eda_ext") == "Contractor"
+        )
+
     if "address_eda_ext_n" in data:
         for address in data["address_eda_ext_n"]:
             if address.get("fk_address_details_eda_ext") in row_ids:
@@ -232,9 +227,12 @@ def populate_total_obligated_amount(data: dict) -> str:
 def populate_naics(data: dict) -> str:
     if "refnum_eda_ext_n" in data:
         for refnum in data['refnum_eda_ext_n']:
-            if "ref_desc_eda_ext" in refnum:
-                if refnum['ref_desc_eda_ext'] == "North American Industry Classification System (NAICS)":
-                    if "ref_value_eda_ext" in refnum:
-                        return refnum.get("ref_value_eda_ext")
+            if (
+                "ref_desc_eda_ext" in refnum
+                and refnum['ref_desc_eda_ext']
+                == "North American Industry Classification System (NAICS)"
+                and "ref_value_eda_ext" in refnum
+            ):
+                return refnum.get("ref_value_eda_ext")
     return None
 

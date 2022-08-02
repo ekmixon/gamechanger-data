@@ -42,7 +42,4 @@ def read_plain_text(fname: Path) -> str:
     Returns:
         text string from file
     """
-    with open(fname) as f_in:
-        text = f_in.read()
-
-    return text
+    return Path(fname).read_text()

@@ -102,6 +102,8 @@ def run(staging_folder: str, aws_s3_input_pdf_prefix: str,
     aws_s3_output_pdf_prefix = data_conf_filter['eda']['aws_s3_output_pdf_prefix']
     aws_s3_json_prefix = data_conf_filter['eda']['aws_s3_json_prefix']
 
+    # How many elements each list should have # work around with issue on queue being over filled
+    n = loop_number
     for input_loc in aws_s3_input_pdf_prefix.split(","):
         print(f"Processing Directory {input_loc}")
         start = time.time()
@@ -118,8 +120,6 @@ def run(staging_folder: str, aws_s3_input_pdf_prefix: str,
         number_file_processed = 0
         number_file_failed = 0
 
-        # How many elements each list should have # work around with issue on queue being over filled
-        n = loop_number
         # using list comprehension
         process_list = [file_list[i * n:(i + 1) * n] for i in range((len(file_list) + n - 1) // n)]
 
@@ -135,18 +135,18 @@ def run(staging_folder: str, aws_s3_input_pdf_prefix: str,
                         try:
                             if fut.result() is not None:
                                 status = fut.result().get('status')
-                                if "already_processed" == status:
+                                if status == "already_processed":
                                     print(f"Following file {fut.result().get('filename')} was already processed, extra info: "
                                           f"{fut.result().get('info')}")
                                     number_file_processed = number_file_processed + 1
-                                elif "completed" == status:
+                                elif status == "completed":
                                     print(f"Following file {fut.result().get('filename')} was processed, extra info: "
                                           f"{fut.result().get('info')}")
                                     number_file_processed = number_file_processed + 1
-                                elif "failed" == status:
+                                elif status == "failed":
                                     print(f"Following file {fut.result().get('filename')} failed")
                                     number_file_failed = number_file_failed + 1
-                                elif "skip" == status:
+                                elif status == "skip":
                                     print(f"Following file {fut.result().get('filename')} was skipped, extra info: "
                                           f"{fut.result().get('info')}")
                         except Exception as exc:
@@ -157,17 +157,21 @@ def run(staging_folder: str, aws_s3_input_pdf_prefix: str,
                                 print(f"EDA **** Failed to process '{exc}'  ****  EDA")
                                 traceback.print_exc()
                             number_file_failed = number_file_failed + 1
-                        except RuntimeError as re:
-                            print(f"EDA **** Failed to process '{re}'  ****  EDA")
-                            traceback.print_exc()
                     else:
                         print("EDA ****  File is not a PDF **** EDA")
 
         end = time.time()
         audit_id = hashlib.sha256(aws_s3_output_pdf_prefix.encode()).hexdigest()
-        audit_complete(audit_id=audit_id + "_" + str(time.time()), publisher=eda_audit_publisher,
-                       number_of_files=number_file_processed, number_file_failed=number_file_failed,
-                       directory=input_loc, modified_date=int(time.time()), duration=int(end - start))
+        audit_complete(
+            audit_id=f"{audit_id}_{str(time.time())}",
+            publisher=eda_audit_publisher,
+            number_of_files=number_file_processed,
+            number_file_failed=number_file_failed,
+            directory=input_loc,
+            modified_date=int(time.time()),
+            duration=int(end - start),
+        )
+
 
         print(f'Total time -- It took {end - start} seconds!')
     print("DONE!!!!!!")

@@ -41,12 +41,8 @@ class Metadata:
     def extract_author_information(self, author):
         middle = ""
         for m in author['middle'] if 'middle' in author else "":
-            middle = middle + " " + m
-        if middle:
-            middle = middle + " "
-        else:
-            middle = " "
-
+            middle = f"{middle} {m}"
+        middle = f"{middle} " if middle else " "
         author_name = "<span class=\"author\">" + (
                 str(author['last']) + str(author['suffix']) + str(author['first']) + middle).rstrip() + "</span>"
 
@@ -55,26 +51,28 @@ class Metadata:
         if author["email"] is None:
             email = ""
 
-        user_info = list()
+        user_info = []
         if author['affiliation']:
             affiliation = author['affiliation']
-            user_info.append(affiliation['laboratory'])
-            user_info.append(affiliation['institution'])
-
+            user_info.extend((affiliation['laboratory'], affiliation['institution']))
             if affiliation['location']:
                 location = affiliation['location']
-                user_info.append(location['postCode'] if "postCode" in location else "")
-                user_info.append(location['settlement'] if "settlement" in location else "")
-                user_info.append(location['region'] if "region" in location else "")
-                user_info.append(location['country'] if "country" in location else "")
-                user_info.append(location['addrLine'] if "addrLine" in location else "")
+                user_info.extend(
+                    (
+                        location['postCode'] if "postCode" in location else "",
+                        location['settlement'] if "settlement" in location else "",
+                        location['region'] if "region" in location else "",
+                        location['country'] if "country" in location else "",
+                        location['addrLine'] if "addrLine" in location else "",
+                    )
+                )
 
         while "" in user_info:
             user_info.remove("")
 
         author_extra_info = "<span class=\"name_info\">" + ", ".join(user_info) + "</span>"
 
-        return author_name + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + author_extra_info + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + email
+        return f"{author_name}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{author_extra_info}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{email}"
 
     def __init__(self, metadata, external_metadata_record):
 
@@ -93,26 +91,36 @@ class Metadata:
         else:
             self.title = external_metadata_record['title']
 
+        authors = []
         if not external_metadata_record['authors']:
-            authors = list()
-            for author in metadata['authors']:
-                authors.append(self.extract_author_information(author))
-            self.authors = authors
+            authors.extend(
+                self.extract_author_information(author)
+                for author in metadata['authors']
+            )
+
         else:
-            authors = list()
-            for author in external_metadata_record['authors'].split(';'):
-                authors.append("<span class=\"name\">" + author + "</span><br />")
-            self.authors = authors
+            authors.extend(
+                "<span class=\"name\">" + author + "</span><br />"
+                for author in external_metadata_record['authors'].split(';')
+            )
+
+
+        self.authors = authors
 
 
 class RefEntries:
     def __init__(self, ref_entries):
-        ref_list = list()
-        for ref_entry_key, ref_entry_value in ref_entries.items():
-            ref_list.append(
-                RefEntry(ref_entry_key, ref_entry_value['type'], ref_entry_value['text'],
-                         ref_entry_value['latex'] if "latex" in ref_entry_value else "",
-                         ref_entry_value['html'] if "html" in ref_entry_value else ""))
+        ref_list = [
+            RefEntry(
+                ref_entry_key,
+                ref_entry_value['type'],
+                ref_entry_value['text'],
+                ref_entry_value['latex'] if "latex" in ref_entry_value else "",
+                ref_entry_value['html'] if "html" in ref_entry_value else "",
+            )
+            for ref_entry_key, ref_entry_value in ref_entries.items()
+        ]
+
         self.ref = ref_list
 
 
@@ -139,19 +147,16 @@ class BibEntry:
 
 class BibEntries:
     def __init__(self, bib_entries):
-        l = list()
+        l = []
         for bib_entry in bib_entries:
             ref = bib_entries[bib_entry]
 
-            authors = list()
+            authors = []
             for author in ref['authors']:
                 middle = ""
                 for m in author['middle']:
-                    middle = middle + " " + m
-                if middle:
-                    middle = middle + ""
-                else:
-                    middle = ""
+                    middle = f"{middle} {m}"
+                middle = f"{middle}" if middle else ""
                 authors.append((str(author['last']) + " " + str(author['suffix']) + " " + str(
                     author['first']) + middle.strip()).rstrip())
 
@@ -170,20 +175,18 @@ class Section:
             self.section = section
 
     def __init__(self, body_text):
-        body = list()
+        body = []
         if isinstance(body_text, list):
             section = ""
             text = ""
             for item in body_text:
-                if section == item['section']:
-                    text = text + html.escape(item['text']) + "<br /><br />" if "text" in item else ""
-                else:
+                if section != item['section']:
                     if section != "":
                         body.append(Section.Item(section.strip(), text.strip()))
                         text = ""
                         section = ""
                     section = item['section']
-                    text = text + html.escape(item['text']) + "<br /><br />" if "text" in item else ""
+                text = text + html.escape(item['text']) + "<br /><br />" if "text" in item else ""
             body.append(Section.Item(section.strip(), text.strip()))
         self.body = body
 
@@ -191,7 +194,7 @@ class Section:
 class Issuance(COVIDDocument):
     def __init__(self, f_name, destination, metadata_record):
         filename = re.sub('.xml.json|.json', '', os.path.basename(f_name))
-        destination_filename = destination + "/" + filename + ".pdf"
+        destination_filename = f"{destination}/{filename}.pdf"
         if path.exists(destination_filename):
             print(f"File already exists: {filename}")
         else:
@@ -209,20 +212,19 @@ def json_read(f_name, external_metadata_record):
         abstact_json = data['abstract'] if "abstract" in data else None
         abstract = extract_abstract(abstact_json, external_metadata_record['abstract'])
 
-        doc_dict = {
+        return {
             'metadata': Metadata(data['metadata'], external_metadata_record),
             'abstracts': abstract,
             'body_texts': Section(data['body_text']),
             'back_matters': Section(data['back_matter']),
             'bib_entries': BibEntries(data['bib_entries']),
-            'ref_entries': RefEntries(data['ref_entries'])
+            'ref_entries': RefEntries(data['ref_entries']),
         }
-        return doc_dict
 
 
 def pdf_write(doc_dict, destination, output_filename):
     schema_path = os.path.join(PACKAGE_PATH, 'covid19Template.html')
-    test_output_file = destination + "/" + output_filename + ".pdf"
+    test_output_file = f"{destination}/{output_filename}.pdf"
 
     covid_19_template = Template(filename=schema_path)
 
@@ -230,9 +232,9 @@ def pdf_write(doc_dict, destination, output_filename):
     try:
         HTML(string=covid_19_template.render(doc_dict=doc_dict)).write_pdf(test_output_file)
     except:
-        with open(test_output_file + ".failed", "w+b") as failed_file:
+        with open(f"{test_output_file}.failed", "w+b") as failed_file:
             failed_file.close()
-            print("Failed to create file: " + test_output_file)
+            print(f"Failed to create file: {test_output_file}")
     # with open(test_output_file, "w+b") as output_file:
     #     pdf = pisa.pisaDocument(covid_19_template.render(doc_dict=doc_dict), output_file)
     #
@@ -243,7 +245,7 @@ def pdf_write(doc_dict, destination, output_filename):
 def metadata_write(metadata_record, destination, filename):
     data = {'doc_name': filename, 'doc_title': metadata_record['title'],
             'publication_date': metadata_record['publish_time'], "access_timestamp": "2020-01-01 00:00:00.000000"}
-    output_filename = destination + "/" + filename + ".pdf.metadata"
+    output_filename = f"{destination}/{filename}.pdf.metadata"
 
     if bool(data):
         with open(output_filename, "w") as output_file:
@@ -253,12 +255,10 @@ def metadata_write(metadata_record, destination, filename):
 def extract_abstract(json_abstract, ext_md_abstract):
     if ext_md_abstract is None:
         return Section(json_abstract)
-    else:
-        section = Section("")
-        body = list()
-        body.append(Section.Item("Abstract", ext_md_abstract + "<br />"))
-        section.body = body
-        return section
+    section = Section("")
+    body = [Section.Item("Abstract", f"{ext_md_abstract}<br />")]
+    section.body = body
+    return section
 
 
 def single_process(data_inputs, metadata):
@@ -294,7 +294,7 @@ def process_dir(dir_path, ignore_files, out_dir="./", metadata_file="metadata.cs
     p = Path(dir_path).glob("**/*.json")
     files = [x for x in p if x.is_file()]
 
-    ignore_files_list = list()
+    ignore_files_list = []
     if ignore_files is not None:
         with open(ignore_files) as f:
             ignore_files_list = f.read().splitlines()
@@ -313,7 +313,7 @@ def process_dir(dir_path, ignore_files, out_dir="./", metadata_file="metadata.cs
             pool = multiprocessing.Pool(processes=os.cpu_count(), maxtasksperchild=1)
         else:
             pool = multiprocessing.Pool(processes=int(multiprocess), maxtasksperchild=1)
-        print("Processing pool: %s", str(pool))
+        print("Processing pool: %s", pool)
         pool.map(partial(single_process, metadata=metadata), data_inputs, 5)
 
     else:
@@ -336,8 +336,7 @@ def load_metadata(f_name):
             for sha_item in sha_list:
                 data[sha_item] = rows
 
-            pmcid = rows['pmcid']
-            if pmcid:
+            if pmcid := rows['pmcid']:
                 data[pmcid] = rows
 
         return data

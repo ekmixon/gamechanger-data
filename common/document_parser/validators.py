@@ -36,7 +36,7 @@ def verify_file(json_file:str) -> bool:
     return is_valid_json
 
 
-def verify_directory(json_directory:str)->bool:
+def verify_directory(json_directory:str) -> bool:
     """
     take in a Json directory and compare them vs a json schema to verify it
     Args:
@@ -50,9 +50,9 @@ def verify_directory(json_directory:str)->bool:
     is_valid = False
     for m_file in files:
         is_valid = verify_file(str(m_file))
-        print("Validation OK - " + str(m_file))
+        print(f"Validation OK - {str(m_file)}")
         if is_valid is False:
-            print("Validation Failed - " + str(m_file))
+            print(f"Validation Failed - {str(m_file)}")
             break
     return is_valid
 
@@ -66,8 +66,8 @@ def verify(source:str) -> bool:
     Returns: True if valid
 
     """
-    if Path(source).is_file():
-        result = verify_file(source)
-    else:
-        result = verify_directory(source)
-    return result
+    return (
+        verify_file(source)
+        if Path(source).is_file()
+        else verify_directory(source)
+    )

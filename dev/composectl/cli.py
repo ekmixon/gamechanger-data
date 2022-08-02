@@ -12,8 +12,9 @@ from .utils import (
 
 def run_sup_compose_commands(commands_to_run: Iterable[str], in_order: bool = False, verbose: bool = False):
     available_commands = get_command_names()
-    unmatched_commands = [c for c in commands_to_run if c not in available_commands]
-    if unmatched_commands:
+    if unmatched_commands := [
+        c for c in commands_to_run if c not in available_commands
+    ]:
         raise ValueError(f"Attempted to run non-existing commands: {commands_to_run!s}")
 
     if not in_order:

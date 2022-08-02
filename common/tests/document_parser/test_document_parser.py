@@ -154,7 +154,7 @@ def test_single_process_mixed_dir(input_dir_with_ocr_and_non_ocr_raw_doc,
     f_name = EXPECTED_OUTPUT_FILES["non_ocr_json_file"]
     json_fp = f"{parsed_doc_output_dir}/{f_name}"
     out_dicts = []
-    for f_name in [EXPECTED_OUTPUT_FILES["non_ocr_json_file"], EXPECTED_OUTPUT_FILES["ocr_json_file"]]:
+    for f_name in [f_name, EXPECTED_OUTPUT_FILES["ocr_json_file"]]:
         json_fp = f"{parsed_doc_output_dir}/{f_name}"
         out_dict = None
         with open(json_fp) as f:
@@ -184,7 +184,7 @@ def test_multiprocess_mixed_dir(input_dir_with_ocr_and_non_ocr_raw_doc,
     f_name = EXPECTED_OUTPUT_FILES["non_ocr_json_file"]
     json_fp = f"{parsed_doc_output_dir}/{f_name}"
     out_dicts = []
-    for f_name in [EXPECTED_OUTPUT_FILES["non_ocr_json_file"], EXPECTED_OUTPUT_FILES["ocr_json_file"]]:
+    for f_name in [f_name, EXPECTED_OUTPUT_FILES["ocr_json_file"]]:
         json_fp = f"{parsed_doc_output_dir}/{f_name}"
         out_dict = None
         with open(json_fp) as f:

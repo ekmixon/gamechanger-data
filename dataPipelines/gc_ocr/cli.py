@@ -31,15 +31,14 @@ def cli():
 )
 def is_ocr(filename: str, quiet: bool) -> None:
     """Check if file is an OCR'ed PDF"""
-    status = is_pdf(filename) and is_ocr_pdf(filename)
-    if not status:
-        if not quiet:
-            print(f"{filename} :: is not OCR'ed PDF")
-        exit(1)
-    else:
+    if status := is_pdf(filename) and is_ocr_pdf(filename):
         if not quiet:
             print(f"{filename} :: is OCR'ed PDF")
         exit(0)
+    else:
+        if not quiet:
+            print(f"{filename} :: is not OCR'ed PDF")
+        exit(1)
 
 
 @cli.command(name='process')

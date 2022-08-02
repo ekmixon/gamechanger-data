@@ -6,7 +6,9 @@ import psycopg2.extensions as pg2ext
 
 def truncate_table(db_engine: sqlalchemy.engine.Engine, table: str, schema: str = 'public', cascade: bool = False) -> None:
     """Truncate given table"""
-    db_engine.execute(f"TRUNCATE TABLE {schema + '.' + table} {'CASCADE' if cascade else ''}")
+    db_engine.execute(
+        f"TRUNCATE TABLE {schema}.{table} {'CASCADE' if cascade else ''}"
+    )
 
 
 def export_to_csv(db_engine: sqlalchemy.engine.Engine, table_or_view: str, output_file: t.Union[Path, str], schema: str = 'public') -> None:
@@ -14,7 +16,8 @@ def export_to_csv(db_engine: sqlalchemy.engine.Engine, table_or_view: str, outpu
     output_file = Path(output_file).resolve()
     con: pg2ext.connection = db_engine.raw_connection()
     cur: pg2ext.cursor = con.cursor()
-    query = f"COPY {schema + '.' + table_or_view} TO STDOUT WITH (FORMAT CSV, HEADER, DELIMITER ',')"
+    query = f"COPY {schema}.{table_or_view} TO STDOUT WITH (FORMAT CSV, HEADER, DELIMITER ',')"
+
 
     with output_file.open(mode="wb") as fd:
         cur.copy_expert(sql=query, file=fd)
@@ -25,7 +28,8 @@ def import_from_csv(db_engine: sqlalchemy.engine.Engine, input_file: t.Union[Pat
     input_file = Path(input_file).resolve()
     con: pg2ext.connection = db_engine.raw_connection()
     cur: pg2ext.cursor = con.cursor()
-    query = f"COPY {schema + '.' + table} FROM STDIN WITH (FORMAT CSV, HEADER, DELIMITER ',')"
+    query = f"COPY {schema}.{table} FROM STDIN WITH (FORMAT CSV, HEADER, DELIMITER ',')"
+
 
     with input_file.open(mode="rb") as fd:
         cur.copy_expert(sql=query, file=fd)
@@ -45,7 +49,4 @@ def check_if_table_or_view_exists(db_engine: sqlalchemy.engine.Engine, table_or_
         """
 
     r = db_engine.execute(query)
-    if r.fetchall():
-        return True
-    else:
-        return False
+    return bool(r.fetchall())

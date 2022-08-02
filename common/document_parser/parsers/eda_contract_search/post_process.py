@@ -20,8 +20,9 @@ def get_access_timestamp(doc_dict):
 
 def get_publication_date(doc_dict):
     try:
-        parsed_date = parse_timestamp(doc_dict.get("publication_date", None))
-        if parsed_date:
+        if parsed_date := parse_timestamp(
+            doc_dict.get("publication_date", None)
+        ):
             return datetime.strftime(parsed_date, '%Y-%m-%dT%H:%M:%S')
     except:
         return ""
@@ -53,9 +54,7 @@ def get_display_org(meta_data):
         return meta_data['display_org']
 
     crawler_used = meta_data["crawler_used"]
-    display_org = CRAWLER_TO_DISPLAY_ORG_LOOKUP[crawler_used]
-
-    return display_org
+    return CRAWLER_TO_DISPLAY_ORG_LOOKUP[crawler_used]
 
 
 def get_display_source(meta_data):
@@ -67,9 +66,7 @@ def get_display_source(meta_data):
         return meta_data['display_source']
 
     crawler_used = meta_data["crawler_used"]
-    display_source = CRAWLER_TO_DISPLAY_SOURCE_LOOKUP[crawler_used]
-
-    return display_source
+    return CRAWLER_TO_DISPLAY_SOURCE_LOOKUP[crawler_used]
 
 
 def get_display_title(meta_data):
@@ -80,7 +77,7 @@ def get_display_title(meta_data):
     doc_type = meta_data["doc_type"].strip()
     doc_num = meta_data["doc_num"].strip()
     doc_title = meta_data["doc_title"].strip()
-    return doc_type + " " + doc_num + " " + doc_title
+    return f"{doc_type} {doc_num} {doc_title}"
 
 
 def rename_and_format(doc_dict):
@@ -116,11 +113,10 @@ def rename_and_format(doc_dict):
         except:
             pass
 
-    if doc_dict["meta_data"]:
-        if "extensions" in doc_dict["meta_data"]:
-            extensions = doc_dict["meta_data"]["extensions"]
-            for key in extensions:
-                doc_dict[key] = extensions[key]
+    if doc_dict["meta_data"] and "extensions" in doc_dict["meta_data"]:
+        extensions = doc_dict["meta_data"]["extensions"]
+        for key in extensions:
+            doc_dict[key] = extensions[key]
 
     to_delete = [
         "meta_data",
@@ -147,5 +143,4 @@ def rename_and_format(doc_dict):
 
 
 def process(doc_dict):
-    processed_dict = rename_and_format(doc_dict)
-    return processed_dict
+    return rename_and_format(doc_dict)

@@ -71,12 +71,13 @@ class PDFOCR:
         self.output_file = Path(output_file or self.input_file).resolve()
         # cleaning up output ext str
         if output_extension is not None:
-            output_extension_str = str(output_extension).strip()
-            if output_extension_str:
+            if output_extension_str := str(output_extension).strip():
                 output_extension_str = (
-                    output_extension_str if output_extension_str.startswith('.')
-                    else '.' + output_extension_str
+                    output_extension_str
+                    if output_extension_str.startswith('.')
+                    else f'.{output_extension_str}'
                 )
+
                 self.output_extension = output_extension_str
                 self.output_file = self.output_file.with_suffix(self.output_extension)
 
@@ -100,7 +101,11 @@ class PDFOCR:
                 print(e)
             else:
                 raise e
-        elif is_ocr_pdf(self.input_file) and not force_ocr and not self.job_type == OCRJobType.NORMAL:
+        elif (
+            is_ocr_pdf(self.input_file)
+            and not force_ocr
+            and self.job_type != OCRJobType.NORMAL
+        ):
             e = PreviouslyOCRError(f"Given file is already OCR'ed: {self.input_file!s}")
             if not ignore_init_errors:
                 print(e)

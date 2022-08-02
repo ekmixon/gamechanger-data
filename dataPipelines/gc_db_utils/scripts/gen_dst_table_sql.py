@@ -176,9 +176,8 @@ def iter_entries_from_es_jsons(
 
             if entry.pub_name in pub_names_so_far:
                 continue
-            else:
-                pub_names_so_far.append(entry.pub_name)
-                yield entry
+            pub_names_so_far.append(entry.pub_name)
+            yield entry
 
 
 def iter_entries_from_metadata(
@@ -199,9 +198,8 @@ def iter_entries_from_metadata(
             )
             if entry.pub_name in pub_names_so_far:
                 continue
-            else:
-                pub_names_so_far.append(entry.pub_name)
-                yield entry
+            pub_names_so_far.append(entry.pub_name)
+            yield entry
 
 
 def get_ddl_cmds():

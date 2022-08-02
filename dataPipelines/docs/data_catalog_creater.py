@@ -23,16 +23,8 @@ def processPublications(devCorp, prodCorp, dir):
                         ingest_pipeline = "Manual"
                         update_frequency = "N/A"
 
-                    if pubName.split(",")[0] in devCorp:
-                        avail_in_dev = True
-                    else:
-                        avail_in_dev = False
-
-                    if pubName.split(",")[0] in prodCorp:
-                        avail_in_prod = True
-                    else:
-                        avail_in_prod = False
-
+                    avail_in_dev = pubName.split(",")[0] in devCorp
+                    avail_in_prod = pubName.split(",")[0] in prodCorp
                     catalog.append(
                         (
                             pubName,
@@ -73,8 +65,7 @@ def processDevCorpusList(dir):
 def processProdCorpusList(prod_file):
     catalog = []
     with open(prod_file) as f:
-        for line in f:
-            catalog.append(line[31:].split(",")[0])
+        catalog.extend(line[31:].split(",")[0] for line in f)
     return catalog
 
 
@@ -85,17 +76,14 @@ def processDevCorpus(dir, crawler_df, prodCorp):
             with open(os.path.join(dir, filename)) as f:
                 j = json.load(f)
                 pubName = j["id"].split(",")[0]
-                if (pubName in df["Publication Name"].values) == False:
+                if pubName not in df["Publication Name"].values:
                     pubNum = j["doc_num"]
                     pubType = j["doc_type"]
                     cac_required = True
                     ingest_pipeline = "Manual"
                     update_frequency = "N/A"
                     avail_in_dev = True
-                    if pubName.split(",")[0] in prodCorp:
-                        avail_in_prod = True
-                    else:
-                        avail_in_prod = False
+                    avail_in_prod = pubName.split(",")[0] in prodCorp
                     df.append(
                         [
                             (
@@ -118,29 +106,31 @@ def processProdCorpus(prod_file, dev_df):
     with open(prod_file) as f:
         for line in f:
             pubName = line[31:].split(",")[0]
-            if (pubName in df["Publication Name"].values) == False:
-                if len(pubName.split(" ")) > 1:
-                    pubNum = pubName.split(" ")[1]
-                    pubType = pubName.split(" ")[0]
-                    cac_required = True
-                    ingest_pipeline = "Manual"
-                    update_frequency = "N/A"
-                    avail_in_dev = False
-                    avail_in_prod = True
-                    df.append(
-                        [
-                            (
-                                pubName,
-                                pubNum,
-                                pubType,
-                                ingest_pipeline,
-                                update_frequency,
-                                cac_required,
-                                avail_in_dev,
-                                avail_in_prod,
-                            )
-                        ]
-                    )
+            if (
+                pubName not in df["Publication Name"].values
+                and len(pubName.split(" ")) > 1
+            ):
+                pubNum = pubName.split(" ")[1]
+                pubType = pubName.split(" ")[0]
+                cac_required = True
+                ingest_pipeline = "Manual"
+                update_frequency = "N/A"
+                avail_in_dev = False
+                avail_in_prod = True
+                df.append(
+                    [
+                        (
+                            pubName,
+                            pubNum,
+                            pubType,
+                            ingest_pipeline,
+                            update_frequency,
+                            cac_required,
+                            avail_in_dev,
+                            avail_in_prod,
+                        )
+                    ]
+                )
     return df
 
 
@@ -149,8 +139,7 @@ def process(source, dev, prod):
     prod_corp_list = processProdCorpusList(prod)
     crawler_df = processPublications(dev_corp_list, prod_corp_list, source)
     dev_df = processDevCorpus(dev, crawler_df, prod_corp_list)
-    total_df = processProdCorpus(prod, dev_df)
-    return total_df
+    return processProdCorpus(prod, dev_df)
 
 
 def parse_args():

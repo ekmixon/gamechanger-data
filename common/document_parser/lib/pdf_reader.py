@@ -6,9 +6,8 @@ class PageCountParse(Exception):
 
 def get_fitz_doc_obj(f_name):
     doc = fitz.open(f_name)
-    if doc.pageCount < 1:
-        doc.close()
-        raise PageCountParse(
-            f"Could not parse the doc, failed page count check: {f_name}")
-    else:
+    if doc.pageCount >= 1:
         return doc
+    doc.close()
+    raise PageCountParse(
+        f"Could not parse the doc, failed page count check: {f_name}")

@@ -8,9 +8,8 @@ def get_html_filename(f_name) -> str:
     """
     tmp_pdf = open(str(f_name).replace('.html', '.pdf'), "w+b")
     if str(f_name).endswith("html"):
-        source_html = open(str(f_name), "r")
-        content = source_html.read()
-        source_html.close()
+        with open(str(f_name), "r") as source_html:
+            content = source_html.read()
         pisaStatus = pisa.CreatePDF(content, dest=tmp_pdf)
         tmp_pdf.close()
 

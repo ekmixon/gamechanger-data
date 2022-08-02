@@ -14,7 +14,7 @@ def check(check_str, ref_type, exp_result):
         num_match = ref_regex[ref_type][0].search(match[0])
         if not num_match:
             continue
-        ref = (str(ref_type) + " " + str(num_match[0])).strip()
+        ref = f"{str(ref_type)} {str(num_match[0])}".strip()
         count += 1
     return count==exp_result
 

@@ -71,8 +71,7 @@ def pdf_to_json(
             num_ocr_threads=num_ocr_threads
         )
     if verify:
-        verified = validators.verify(destination)
-        if verified:
+        if verified := validators.verify(destination):
             print("Jsons are verified")
         else:
             print("Jsons do not match the schema")
@@ -189,8 +188,14 @@ def memory_limit(memory_percentage: float):
         memory_percentage: the percent allowed as a float
     """
     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-    print("Memory Hard Limit: " + str(hard) + " Soft Limit: " + str(soft) +
-          " Maximum of percentage of memory use: " + str(memory_percentage))
+    print(
+        (
+            f"Memory Hard Limit: {str(hard)} Soft Limit: {str(soft)}"
+            + " Maximum of percentage of memory use: "
+        )
+        + str(memory_percentage)
+    )
+
     resource.setrlimit(resource.RLIMIT_AS, (get_memory()
                                             * 1024 * memory_percentage, hard))
 
@@ -203,7 +208,7 @@ def get_memory():
         free_memory = 0
         for i in mem:
             sline = i.split()
-            if str(sline[0]) in ('MemFree:', 'Buffers:', 'Cached:'):
+            if str(sline[0]) in {'MemFree:', 'Buffers:', 'Cached:'}:
                 free_memory += int(sline[1])
-    print("____________________ " + str(free_memory) + "____________________")
+    print(f"____________________ {str(free_memory)}____________________")
     return free_memory

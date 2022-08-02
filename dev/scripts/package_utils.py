@@ -78,8 +78,7 @@ class SonarScanner(pyd.BaseModel):
 
 
 def upgrade_all_packages(python_cmd: str = shutil.which('python')) -> None:
-    packages = [dist.project_name for dist in pkg_resources.working_set]
-    if packages:
+    if packages := [dist.project_name for dist in pkg_resources.working_set]:
         sub.run([
             python_cmd,
             '-m',
@@ -109,20 +108,14 @@ def parse_regular_pkg(_s: str) -> Package:
     m = REGULAR_PKG_SPEC_REGEX.match(_s)
     pkg_name = normalize_package_name(m.group('package_name'))
     pkg_version = m.group('package_version')
-    return Package(
-        name=pkg_name,
-        pkg_spec='{}=={}'.format(pkg_name, pkg_version)
-    )
+    return Package(name=pkg_name, pkg_spec=f'{pkg_name}=={pkg_version}')
 
 
 def parse_ext_pkg(_s: str) -> Package:
     m = EXTENDED_PKG_SPEC_REGEX.match(_s)
     pkg_name = normalize_package_name(m.group('package_name'))
     pkg_url = m.group('package_url')
-    return Package(
-        name=pkg_name,
-        pkg_spec="{}@{}".format(pkg_name, pkg_url)
-    )
+    return Package(name=pkg_name, pkg_spec=f"{pkg_name}@{pkg_url}")
 
 
 def get_package_list(file: t.Union[str, Path]) -> t.List[Package]:
@@ -136,9 +129,16 @@ def get_package_list(file: t.Union[str, Path]) -> t.List[Package]:
 def get_packages_to_replace(old: t.List[Package], new: t.List[Package]) -> t.List[PackageReplacement]:
     results = []
     for old_pkg in old:
-        for new_pkg in new:
-            if old_pkg.name.lower() == new_pkg.name.lower() and old_pkg.pkg_spec.lower() != new_pkg.pkg_spec.lower():
-                results.append(PackageReplacement(old_pkg=old_pkg.copy(deep=True), new_pkg=new_pkg.copy(deep=True)))
+        results.extend(
+            PackageReplacement(
+                old_pkg=old_pkg.copy(deep=True),
+                new_pkg=new_pkg.copy(deep=True),
+            )
+            for new_pkg in new
+            if old_pkg.name.lower() == new_pkg.name.lower()
+            and old_pkg.pkg_spec.lower() != new_pkg.pkg_spec.lower()
+        )
+
     return results
 
 
@@ -163,8 +163,8 @@ def get_packages_to_install(old: t.Iterable[Package], new: t.Iterable[Package]) 
 
 
 def get_packages_to_remove(old: t.Iterable[Package], new: t.Iterable[Package]) -> t.List[Package]:
-    new_names = [n for n in map(lambda i: i.name, new)]
-    return list((p for p in old if p.name in new_names))
+    new_names = list(map(lambda i: i.name, new))
+    return [p for p in old if p.name in new_names]
 
 
 def install_pkg_to_base_dir(pkg: Package, base_dir: t.Union[str, Path], python_cmd="/resolver/bin/python") -> DownloadedPackage:

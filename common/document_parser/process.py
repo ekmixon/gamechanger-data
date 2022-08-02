@@ -100,8 +100,13 @@ def single_process(data_inputs: typing.Tuple[typing.Callable, str, str, bool, in
                        num_ocr_threads=num_ocr_threads, force_ocr=force_ocr, out_dir=out_dir)
         else:
 
-            loc_meta_path = Path(Path(meta_data) if Path(meta_data).is_dir() else Path(meta_data).parent,
-                                 Path(f_name).name + '.metadata')
+            loc_meta_path = Path(
+                Path(meta_data)
+                if Path(meta_data).is_dir()
+                else Path(meta_data).parent,
+                f'{Path(f_name).name}.metadata',
+            )
+
 
             if loc_meta_path.exists():
                 parse_func(f_name=f_name, meta_data=loc_meta_path, ocr_missing_doc=ocr_missing_doc, 
@@ -111,7 +116,6 @@ def single_process(data_inputs: typing.Tuple[typing.Callable, str, str, bool, in
                 parse_func(f_name=f_name, meta_data=meta_data, ocr_missing_doc=ocr_missing_doc,
                            num_ocr_threads=num_ocr_threads, force_ocr=force_ocr, out_dir=out_dir)
 
-    # TODO: catch this where failed files can be counted or increment shared counter (for mp)
     except (OCRError, UnparseableDocument, PageCountParse) as e:
         print(e)
         print(
@@ -157,10 +161,31 @@ def process_dir(
     """
 
     p = Path(dir_path).glob("**/*")
-    files = [x for x in p if x.is_file() and (str(x).endswith("pdf") or str(x).endswith("html")
-        or (filetype.guess(str(x)) is not None and (filetype.guess(str(x)).mime == "pdf" or filetype.guess(str(x)).mime == "application/pdf")))]
-    data_inputs = [(parse_func, f_name, str(f_name)+'.metadata', ocr_missing_doc,
-                    num_ocr_threads, force_ocr, out_dir) for f_name in files]
+    files = [
+        x
+        for x in p
+        if x.is_file()
+        and (
+            str(x).endswith("pdf")
+            or str(x).endswith("html")
+            or filetype.guess(str(x)) is not None
+            and filetype.guess(str(x)).mime in ["pdf", "application/pdf"]
+        )
+    ]
+
+    data_inputs = [
+        (
+            parse_func,
+            f_name,
+            f'{str(f_name)}.metadata',
+            ocr_missing_doc,
+            num_ocr_threads,
+            force_ocr,
+            out_dir,
+        )
+        for f_name in files
+    ]
+
 
     doc_logger = get_default_logger()
     doc_logger.info("Parsing Multiple Documents: %i", len(data_inputs))
@@ -175,13 +200,12 @@ def process_dir(
             pool = multiprocessing.Pool(
                 processes=os.cpu_count(), maxtasksperchild=1)
         else:
-            pool = multiprocessing.Pool(
-                processes=int(multiprocess), maxtasksperchild=1)
+            pool = multiprocessing.Pool(processes=multiprocess, maxtasksperchild=1)
         doc_logger.info("Processing pool: %s", str(pool))
         pool.map(single_process, data_inputs, 5)
-        # diff = time.time() - begin
-        # print('MP total: ', diff)
-        # print('MP avg', diff / (len(data_inputs) + 0.0001))
+            # diff = time.time() - begin
+            # print('MP total: ', diff)
+            # print('MP avg', diff / (len(data_inputs) + 0.0001))
     else:
         # times = []
         for item in data_inputs:

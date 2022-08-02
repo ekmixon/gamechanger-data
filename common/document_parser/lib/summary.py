@@ -4,11 +4,7 @@ from gamechangerml.src.featurization.summary import GensimSumm
 
 def get_summary(text: str) -> str:
 
-    if len(text) < BertSummConfig.MODEL_ARGS['doc_limit']:
-        long_doc = False
-    else:
-        long_doc = True
-
+    long_doc = len(text) >= BertSummConfig.MODEL_ARGS['doc_limit']
     try:
         return GensimSumm(text, long_doc=long_doc, word_count=30).make_summary()
     except Exception as e:

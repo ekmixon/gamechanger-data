@@ -20,7 +20,7 @@ def example_server():
 
     os.chdir(webserver_root)  # necessary for python <3.7
 
-    if not Path(".").absolute().name == 'example_webserver_root':
+    if Path(".").absolute().name != 'example_webserver_root':
         raise RuntimeError(
             f"Could not change dir to example webserver root: {example_root}"
         )

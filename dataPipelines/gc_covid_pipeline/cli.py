@@ -79,8 +79,14 @@ def json_to_pdf(source, destination, metadata, ignore_files, multiprocess=-1) ->
 
 def memory_limit(memory_percentage: float):
     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-    print("Memory Hard Limit: " + str(hard) + " Soft Limit: " + str(
-        soft) + " Maximum of percentage of memory use: " + str(memory_percentage))
+    print(
+        (
+            f"Memory Hard Limit: {str(hard)} Soft Limit: {str(soft)}"
+            + " Maximum of percentage of memory use: "
+        )
+        + str(memory_percentage)
+    )
+
     resource.setrlimit(resource.RLIMIT_AS, (get_memory() * 1024 * memory_percentage, hard))
 
 
@@ -89,7 +95,7 @@ def get_memory():
         free_memory = 0
         for i in mem:
             sline = i.split()
-            if str(sline[0]) in ('MemFree:', 'Buffers:', 'Cached:'):
+            if str(sline[0]) in {'MemFree:', 'Buffers:', 'Cached:'}:
                 free_memory += int(sline[1])
-    print("____________________ " + str(free_memory) + "____________________")
+    print(f"____________________ {str(free_memory)}____________________")
     return free_memory

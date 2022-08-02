@@ -74,8 +74,7 @@ class SnapshotManager:
         ch = Config.connection_helper
 
         with ch.orch_db_session_scope('ro') as session:
-            for obj in session.query(SnapshotViewEntry).yield_per(scroll_window):
-                yield obj
+            yield from session.query(SnapshotViewEntry).yield_per(scroll_window)
 
     def recreate_web_db_snapshot(self) -> None:
         """Recreate snapshot table in web db using snapshot view from orch db"""
@@ -127,7 +126,7 @@ class SnapshotManager:
                     object_path=snapshot_entry.doc_s3_location,
                     file=Path(local_dir, Path(snapshot_entry.doc_s3_location).name)
                 )
-                with Path(local_dir, Path(snapshot_entry.doc_s3_location).name + ".metadata").open("w") as f:
+                with Path(local_dir, f"{Path(snapshot_entry.doc_s3_location).name}.metadata").open("w") as f:
                     f.write(snapshot_entry.json_metadata)
 
         else:
@@ -149,7 +148,7 @@ class SnapshotManager:
         """
         local_dir = Path(local_dir).resolve()
         prefix = self.get_current_prefix(snapshot_type)
-        print("dir" + str(local_dir))
+        print(f"dir{str(local_dir)}")
         self.shellu.make_archive('./json_files', 'zip', local_dir)
         self.s3u.upload_file(file='./json_files' + '.zip', object_prefix=prefix)
 
@@ -169,7 +168,11 @@ class SnapshotManager:
         prefix = self.get_current_prefix(snapshot_type)
 
         if replace:
-            print(f"Deleting current snapshot files before processing update ...", file=sys.stderr)
+            print(
+                "Deleting current snapshot files before processing update ...",
+                file=sys.stderr,
+            )
+
             self.s3u.delete_prefix(prefix=prefix, max_threads=max_threads)
 
         print(f"Updating current snapshot at {prefix} prefix with contents of local dir {local_dir!s} ... ",
@@ -208,11 +211,9 @@ class SnapshotManager:
         snapshot_ts = parse_timestamp(ts=snapshot_ts, raise_parse_error=True)
         backed_up_snapshot_paths: t.List[str] = []
         for st in SnapshotType:
-            s3_path = self.backup_current_snapshot(
-                snapshot_type=st,
-                snapshot_ts=snapshot_ts
-            )
-            if s3_path:
+            if s3_path := self.backup_current_snapshot(
+                snapshot_type=st, snapshot_ts=snapshot_ts
+            ):
                 backed_up_snapshot_paths.append(s3_path)
         return backed_up_snapshot_paths
 

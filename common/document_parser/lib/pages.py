@@ -5,9 +5,7 @@ from gamechangerml.src.featurization.keywords.extract_keywords import get_keywor
 def create_page_dict(page_num, page_text, doc_dict):
     cleaned_text = clean_text(page_text)
     utf8_ptext = utf8_pass(cleaned_text)
-    page_dict = {}
-    page_dict["type"] = "page"
-    page_dict["p_text"] = utf8_ptext
+    page_dict = {"type": "page", "p_text": utf8_ptext}
     doc_dict["keyw_5"].append(get_keywords(page_text))
     page_dict["p_raw_text"] = page_text
     page_dict["p_page"] = page_num
@@ -29,5 +27,5 @@ def handle_pages(doc_obj, doc_dict):
     doc_dict["keyw_5"] = []
     for page_num, page in enumerate(doc_obj.pages()):
         page_text = page.getText()
-        doc_dict["text"] = doc_dict["text"] + page_text
+        doc_dict["text"] += page_text
         handle_page(page_num, page_text, doc_dict)

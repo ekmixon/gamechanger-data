@@ -89,8 +89,7 @@ class CoreDBManager:
         :return: Iterable of snapshot entries
         """
         with self.ch.orch_db_session_scope('ro') as session:
-            for obj in session.query(SnapshotViewEntry).yield_per(scroll_window):
-                yield obj
+            yield from session.query(SnapshotViewEntry).yield_per(scroll_window)
 
     # TODO: remove recreate db snapshot functions/cli out of dataPipelines.gc_ingest.tools.snapshot
     # TODO: create a more generic function for materializing views from one db to another with optional field remapping
@@ -197,7 +196,7 @@ class CoreDBManager:
             raise ValueError(f"Given export dir doesn't exist: {export_base_dir!s}")
 
         for table_name in backup_tables:
-            output_file = Path(export_base_dir, table_name + ".csv")
+            output_file = Path(export_base_dir, f"{table_name}.csv")
             if (not clobber) and output_file.exists():
                 raise FileExistsError(f"There's already a file at this location: {output_file!s}")
 
@@ -216,11 +215,11 @@ class CoreDBManager:
             raise ValueError(f"Given import dir doesn't exist: {import_base_dir!s}")
 
         restoreable_tables = self.BACKUP_TABLES_MAP[db_type]
-        importable_files = [p for p in import_base_dir.glob("*.csv")]
+        importable_files = list(import_base_dir.glob("*.csv"))
         importable_tables = [p.stem for p in importable_files]
 
         if not restoreable_tables >= set(importable_tables):
-            expected_files = [t + '.csv' for t in restoreable_tables]
+            expected_files = [f'{t}.csv' for t in restoreable_tables]
             raise ValueError(f"Could not find appropriate backup files in the dir. "
                                f"- looking for {expected_files}, but found these instead: {[p.name for p in importable_files]}")
 

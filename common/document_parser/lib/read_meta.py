@@ -9,10 +9,7 @@ def read_metadata(meta_data) -> dict:
     if type(meta_data) == dict:
         return meta_data
 
-    if type(meta_data) == str:
-        meta_fname = Path(meta_data)
-    else:
-        meta_fname = meta_data
+    meta_fname = Path(meta_data) if type(meta_data) == str else meta_data
     try:
         with open(meta_fname) as f_in:
             data = json.load(f_in)

@@ -23,8 +23,7 @@ from multiprocessing.pool import ThreadPool
 def get_logger() -> logging.Logger:
     logging.basicConfig(format='%(asctime)s.%(msecs)03d | %(levelname)s | %(message)s', datefmt='%Y-%m-%dT%H:%M:%S',
                         level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    return logger
+    return logging.getLogger(__name__)
 
 
 def get_nonvalidating_ssl_context() -> ssl.SSLContext:
@@ -53,10 +52,8 @@ def flexible_utf8_json_encoder(o: object) -> object:
 def calculate_md5(filepath: str) -> str:
     with open(filepath, "rb") as f:
         file_hash = hashlib.md5()
-        chunk = f.read(8192)
-        while chunk:
+        while chunk := f.read(8192):
             file_hash.update(chunk)
-            chunk = f.read(8192)
         return file_hash.hexdigest()
 
 
@@ -71,7 +68,7 @@ def validate_manifest(manifest_path: t.Union[str, Path], file_dir: t.Union[str, 
     for p in (Path(file_dir, filename) for filename in manifest.keys()):
         manifest_md5 = manifest[p.name]
         actual_md5 = calculate_md5(str(p))
-        if not manifest_md5 == actual_md5:
+        if manifest_md5 != actual_md5:
             failures.append({
                 "filename": p.name,
                 "manifest_md5": manifest_md5,
@@ -126,7 +123,7 @@ class EsConfig:
             l.error("Username and password must both be set or not at all")
             raise ValueError("Unset username/password")
 
-        self.auth_on = True if (username and password) else False
+        self.auth_on = bool((username and password))
         self.username = username
         self.password = password
         self.ssl_on = ssl_on
@@ -180,8 +177,7 @@ def es_request(
     )
 
     return urq.urlopen(
-        url=request,
-        context=NON_VALIDATING_SSL_CTX if not validate_ssl else None
+        url=request, context=None if validate_ssl else NON_VALIDATING_SSL_CTX
     )
 
 
@@ -258,14 +254,14 @@ def insert_json(
         retries: int = 2,
         retry_interval: float = 0.5,
         **kwargs) -> None:
-    retries = int(retries)
+    retries = retries
 
     url = (
         f"/{index_name}/" +
         f"_doc/{doc_id or ''}"
         # (f"_create/{doc_id}" if doc_id else "_doc")
     )
-    method = "POST" if not doc_id else "PUT"
+    method = "PUT" if doc_id else "POST"
 
     while True:
         try:
@@ -279,12 +275,11 @@ def insert_json(
             break
         except Exception as e:
             l.error("Error while attempting to insert: %s", str(e))
-            if retries:
-                l.info("Retrying insert ...")
-                time.sleep(retry_interval)
-                retries -= 1
-            else:
+            if not retries:
                 raise(e)
+            l.info("Retrying insert ...")
+            time.sleep(retry_interval)
+            retries -= 1
 
 
 def insert_pub_json(index_name: str, json_path: t.Union[str, Path], es_conf: EsConfig, **insert_json_kwargs) -> None:
@@ -393,8 +388,7 @@ def arg_s3_prefix_url(s: str) -> str:
     if not s.startswith('s3://'):
         raise argparse.ArgumentTypeError("Not a valid S3_URL. Must start with s3://")
 
-    s = s if s.endswith("/") else s + "/"
-    return s
+    return s if s.endswith("/") else f"{s}/"
 
 
 def arg_job_tmp_dir(s: str) -> str:
@@ -548,20 +542,20 @@ if __name__ == '__main__':
     combined_archive_path = Path(combined_archive_tmp_file.name).absolute()
 
     try:
-        l.info(f"Validating manifest ...")
+        l.info("Validating manifest ...")
         validate_manifest(
             manifest_path=manifest_path,
             file_dir=bundle_dir
         )
 
-        l.info(f"Joining archive parts ...")
+        l.info("Joining archive parts ...")
         join_split_archive(
             manifest_path=manifest_path,
             file_dir=bundle_dir,
             combined_archive_path=combined_archive_path
         )
 
-        l.info(f"Unzipping archive ...")
+        l.info("Unzipping archive ...")
         unzip_archive(
             archive_path=combined_archive_path,
             output_dir=extract_dir_path
@@ -569,13 +563,12 @@ if __name__ == '__main__':
 
         for mappings_and_settings_file in mappings_dir_path.glob("*.json"):
             alias_name = mappings_and_settings_file.stem
-            index_name = alias_name + "_" + index_suffix
+            index_name = f"{alias_name}_{index_suffix}"
 
             if index_exists(index_name, es_conf=es_conf):
-                l.info(f"Index '%s' exists, skipping index creation ...", index_name)
-                pass
+                l.info("Index '%s' exists, skipping index creation ...", index_name)
             else:
-                l.info(f"Creating index: %s", index_name)
+                l.info("Creating index: %s", index_name)
                 create_index(
                     index_name=index_name,
                     es_conf=es_conf,
@@ -587,7 +580,7 @@ if __name__ == '__main__':
                 )
 
             if alias_name == "entities":
-                l.info(f"Indexing entities into %s ...", index_name)
+                l.info("Indexing entities into %s ...", index_name)
                 index_entities_csv(
                     csv_file=entities_csv,
                     index_name=index_name,
@@ -596,7 +589,7 @@ if __name__ == '__main__':
                 )
 
             if alias_name == "gamechanger":
-                l.info(f"Indexing publications into %s ...", index_name)
+                l.info("Indexing publications into %s ...", index_name)
                 index_pub_dir(
                     index_name=index_name,
                     json_dir=json_dir_path,
@@ -604,27 +597,32 @@ if __name__ == '__main__':
                     max_threads=max_threads
                 )
             if not skip_alias:
-                l.info(f"Setting alias %s -> %s ...", alias_name, index_name)
+                l.info("Setting alias %s -> %s ...", alias_name, index_name)
                 set_alias(
                     index_name=index_name,
                     alias_name=alias_name,
                     es_conf=es_conf
                 )
 
-                l.info(f"Removing all references to alias %s , except %s ...", alias_name, index_name)
+                l.info(
+                    "Removing all references to alias %s , except %s ...",
+                    alias_name,
+                    index_name,
+                )
+
                 prune_alias(
                     keep_index_name=index_name,
                     alias_name=alias_name,
                     es_conf=es_conf
                 )
 
-        l.info(f"Uploading PDF's to S3 ...")
+        l.info("Uploading PDF's to S3 ...")
         upload_dir_to_s3(
             local_dir=pdf_dir_path,
             s3_prefix=pdf_s3_prefix
         )
 
-        l.info(f"Uploading JSON's to S3 ...")
+        l.info("Uploading JSON's to S3 ...")
         upload_dir_to_s3(
             local_dir=json_dir_path,
             s3_prefix=json_s3_prefix

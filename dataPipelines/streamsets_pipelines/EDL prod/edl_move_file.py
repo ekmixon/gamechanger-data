@@ -17,11 +17,20 @@ for record in records:
                                                                                                                '').replace(
             ')', '').lower()
         if (system_name == 'none'):
-            record.value['hdfs_file_path'] = default_output_path + '/unsorted' + output_directory_name
-            record.value['hdfs_file_system_dir'] = default_output_path + '/unsorted'
+            record.value[
+                'hdfs_file_path'
+            ] = f'{default_output_path}/unsorted{output_directory_name}'
+
+            record.value['hdfs_file_system_dir'] = f'{default_output_path}/unsorted'
         else:
-            record.value['hdfs_file_path'] = default_output_path + '/sorted/' + system_name + output_directory_name
-            record.value['hdfs_file_system_dir'] = default_output_path + '/sorted/' + system_name
+            record.value[
+                'hdfs_file_path'
+            ] = f'{default_output_path}/sorted/{system_name}{output_directory_name}'
+
+            record.value[
+                'hdfs_file_system_dir'
+            ] = f'{default_output_path}/sorted/{system_name}'
+
         record.value['input_file_path'] = default_input_path + output_directory_name
         #### COST system ####
         if (record.value['system'] == 'COST'):
@@ -33,83 +42,143 @@ for record in records:
 
             if (product_info == 'Cost Management - Enterprise'):
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_Ent/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_Ent/{output_filename}'
 
-            elif (product_info == 'Cost Management - IT'):
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_IT/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
 
-            elif (product_info == 'Cost Management - FM'):
-                record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_FM/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
 
-            elif (product_info == 'Cost Management - Medical'):
+            elif product_info == 'Cost Management - IT':
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_Med/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_IT/{output_filename}'
 
-            elif (product_info == 'Cost Management - Reference'):
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_REF/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
 
-            elif (product_info == 'Cost Management - Real Property'):
-                record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_RP/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
-            elif (record.value['system'] == 'COST'):
-                record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_Other/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
 
-        #### Budget Analytics product ####
-        elif (record.value['system'] == 'OMB-MAX'):
+            elif product_info == 'Cost Management - FM':
+                record.value[
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_FM/{output_filename}'
+
+                record.value[
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
+
+            elif product_info == 'Cost Management - Medical':
+                record.value[
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_Med/{output_filename}'
+
+                record.value[
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
+
+            elif product_info == 'Cost Management - Reference':
+                record.value[
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_REF/{output_filename}'
+
+                record.value[
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
+
+            elif product_info == 'Cost Management - Real Property':
+                record.value[
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_RP/{output_filename}'
+
+                record.value[
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
+            elif record.value['system'] == 'COST':
+                record.value[
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/CostManagement/DCMO_Cost_Raw_Other/{output_filename}'
+
+                record.value[
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
+
+        elif record.value['system'] == 'OMB-MAX':
             product_arr = record.value['product']
             if (',' in product_arr):
                 product_info = product_arr.split(',')[0][1:-1]
             else:
                 product_info = product_arr[2:-2]
-            if (product_info == 'Budget Analytics' and record.value['filename'][0:12] == 'BA_132Daily_'):
+            if (
+                product_info == 'Budget Analytics'
+                and record.value['filename'][:12] == 'BA_132Daily_'
+            ):
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/BudgetAnalytics/132_DailyFiles/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/BudgetAnalytics/132_DailyFiles/{output_filename}'
 
-        ###### COVID Taskforce Daily uploaded datasets #####
-        elif (record.value['system'] == 'COVID-taskforce'):
+                record.value[
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
+
+        elif record.value['system'] == 'COVID-taskforce':
             ##### Carepoint data #####
             if ('_carepoint_mtfbedstatus.xlsx' in output_filename):
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/carepoint/military_treatment_facility_bed_status_staging/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
-            ##### DoDCases data #####
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/carepoint/military_treatment_facility_bed_status_staging/{output_filename}'
+
+                record.value[
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
             elif (output_filename.startswith('dodcases_')):
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/covid_taskforce/dod_case_location_staging/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
-            ##### DMA data #####
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/covid_taskforce/dod_case_location_staging/{output_filename}'
+
+                record.value[
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
             elif (output_filename.startswith('DOD_covid_JS_data_')):
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/covid_taskforce/dod_casedata_dma_staging/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
-        ###### PBIS #####
-        elif (record.value['system'] == 'PBIS'):
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/covid_taskforce/dod_casedata_dma_staging/{output_filename}'
+
+                record.value[
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
+        elif record.value['system'] == 'PBIS':
             ##### Allocation Table #####
             if ('PBIS_ALLOCATION_TABLE' in output_filename):
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/PBIS/allocation_detail/allocation_table/latest/' + output_filename
-                record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
-            elif ('PBIS_WORKING_TABLE' in output_filename):
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/PBIS/allocation_detail/allocation_table/latest/{output_filename}'
+
                 record.value[
-                    'hdfs_file_path'] = '/data_zones/raw_zone/PBIS/working_tables/pbis/latest/' + output_filename
+                    'input_file_path'
+                ] = f'/apps/webapp/ExternalDataLoadUploads{base_path}'
+
+            elif 'PBIS_WORKING_TABLE' in output_filename:
+                record.value[
+                    'hdfs_file_path'
+                ] = f'/data_zones/raw_zone/PBIS/working_tables/pbis/latest/{output_filename}'
+
                 record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
             elif ('BOCS_WORKING_TABLE' in output_filename):
                 record.value[
                     'hdfs_file_path'] = '/data_zones/raw_zone/PBIS/working_tables/bocs/latest/' + output_filename
                 record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path
-            ##### Policy Analytics - Gamechanger clone files #####
+                    ##### Policy Analytics - Gamechanger clone files #####
         elif ((record.value['system'] in ["GAMECHANGER", "Policy Analytics"]) and (
                 record.value['portfolio'].find('GAMECHANGER') > 0)):
             record.value['input_file_path'] = '/apps/webapp/ExternalDataLoadUploads' + base_path

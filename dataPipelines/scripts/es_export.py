@@ -18,8 +18,7 @@ REPO_PATH: str = os.path.abspath(os.path.join(PACKAGE_PATH, '../../'))
 def get_logger() -> logging.Logger:
     logging.basicConfig(format='%(asctime)s.%(msecs)03d | %(levelname)s | %(message)s', datefmt='%Y-%m-%dT%H:%M:%S',
                         level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    return logger
+    return logging.getLogger(__name__)
 
 
 l = get_logger()
@@ -98,10 +97,14 @@ def update_revocations(parsed_json_dir: t.Union[str, Path], revocation_map: t.Di
 
 
     def get_matching_doc_name(parsed_json_path: Path) -> str:
-        metadata_path = Path(pdf_dir, parsed_json_path.stem + ".pdf.metadata")
-        if not metadata_path.exists():
-            return parsed_json_path.stem
-        return json.load(metadata_path.open()).get("doc_name", parsed_json_path.stem)
+        metadata_path = Path(pdf_dir, f"{parsed_json_path.stem}.pdf.metadata")
+        return (
+            json.load(metadata_path.open()).get(
+                "doc_name", parsed_json_path.stem
+            )
+            if metadata_path.exists()
+            else parsed_json_path.stem
+        )
 
     for p in parsed_json_dir.glob("*.json"):
         jdict = json.load(p.open(mode='r'))
@@ -135,7 +138,7 @@ def split_archive(output_dir: t.Union[str, Path], archive_path: t.Union[str, Pat
 
     output_dir.mkdir(exist_ok=True)
 
-    part_name = archive_path.name + ".part_"
+    part_name = f"{archive_path.name}.part_"
     sub.run([
         "split",
         "-b", chunk_size,
@@ -151,21 +154,15 @@ def calculate_md5(filepath: t.Union[str, Path]) -> str:
     filepath = Path(filepath).absolute()
     with filepath.open("rb") as f:
         file_hash = hashlib.md5()
-        chunk = f.read(8192)
-        while chunk:
+        while chunk := f.read(8192):
             file_hash.update(chunk)
-            chunk = f.read(8192)
-
         return file_hash.hexdigest()
 
 
 def create_manifest(file_list: t.List[str], manifest_path: t.Union[str, Path]) -> str:
     l.info("***CREATING MANIFEST OF CHECKSUMS***")
     manifest_path = Path(manifest_path).absolute()
-    manifest_dict = {}
-    for file in file_list:
-        manifest_dict[Path(file).name] = calculate_md5(file)
-
+    manifest_dict = {Path(file).name: calculate_md5(file) for file in file_list}
     json.dump(manifest_dict, manifest_path.open('w'))
     return str(manifest_path)
 
@@ -173,7 +170,12 @@ def create_manifest(file_list: t.List[str], manifest_path: t.Union[str, Path]) -
 def upload_to_s3(input_dir: t.Union[str, Path], s3_upload_prefix: str) -> None:
     l.info("***UPLOADING TO S3***")
     input_dir = Path(input_dir).absolute()
-    s3_upload_prefix = s3_upload_prefix if s3_upload_prefix.endswith("/") else s3_upload_prefix + '/'
+    s3_upload_prefix = (
+        s3_upload_prefix
+        if s3_upload_prefix.endswith("/")
+        else f'{s3_upload_prefix}/'
+    )
+
     sub.run(["aws", "s3", "cp", "--recursive", str(input_dir), s3_upload_prefix], check=True)
 
 
@@ -181,8 +183,7 @@ def arg_s3_prefix_url(s: str) -> str:
     if not s.startswith('s3://'):
         raise argparse.ArgumentTypeError("Not a valid S3_URL. Must start with s3://")
 
-    s = s if s.endswith("/") else s + "/"
-    return s
+    return s if s.endswith("/") else f"{s}/"
 
 
 def arg_job_tmp_dir(s: str) -> str:

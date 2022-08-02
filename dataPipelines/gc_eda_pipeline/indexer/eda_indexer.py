@@ -43,12 +43,12 @@ class EDSConfiguredElasticsearchPublisher(ConfiguredElasticsearchPublisher):
                 except TransportError as te:
                     error_message = f"\nFailed -- Unexpected Elasticsearch Transport Exception: {path_json} {record_id} {record_id_encode.hexdigest()}\n"
                     time.sleep(2)
-                    counter = counter + 1
+                    counter += 1
                 except ElasticsearchException as ee:
                     error_message = f"\nFailed -- Unexpected Elasticsearch Exception: {path_json} {record_id} {record_id_encode.hexdigest()}\n"
                     time.sleep(2)
                     print(ee)
-                    counter = counter + 1
+                    counter += 1
             if error_message is not None:
                 print(error_message)
 
@@ -62,7 +62,7 @@ class EDSConfiguredElasticsearchPublisher(ConfiguredElasticsearchPublisher):
                 response = self.es.index(index=self.index_name, id=id_record, body=json_record)
                 is_suc = True
             except TransportError as exc:
-                counter = counter + 1
+                counter += 1
                 time.sleep(2)
                 if counter == 10:
                     traceback.print_exc()
@@ -75,12 +75,10 @@ class EDSConfiguredElasticsearchPublisher(ConfiguredElasticsearchPublisher):
         return response['_source']
 
     def search(self, index: str, body: str):
-        response = self.es.search(index=index, body=body)
-        return response
+        return self.es.search(index=index, body=body)
 
     def count(self, index: str, body: str):
-        response = self.es.count(index=index, body=body)
-        return response
+        return self.es.count(index=index, body=body)
 
     def exists(self, id: str) -> bool:
         return self.es.exists(index=self.index_name, id=id)

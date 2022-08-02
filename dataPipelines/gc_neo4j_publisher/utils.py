@@ -50,7 +50,7 @@ class Neo4jJobManager:
     @staticmethod
     def listener(q: mp.Queue, total: int) -> None:
         pbar = tqdm(total=total)
-        for item in iter(q.get, None):
+        for _ in iter(q.get, None):
             pbar.update()
 
     @staticmethod
@@ -89,7 +89,7 @@ class Neo4jJobManager:
         :param infobox_dir: where the infobox jsons are saved if no web scraping
         """
         source = str(Path(source).resolve())
-        max_theoretical_threads = mp.cpu_count() - 1 if mp.cpu_count() - 1 > 0 else 1
+        max_theoretical_threads = mp.cpu_count() - 1 if mp.cpu_count() > 1 else 1
         max_threads = max_theoretical_threads if max_threads <= 0 else max_threads
 
         file_dir = source

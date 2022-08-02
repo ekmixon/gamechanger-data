@@ -20,7 +20,7 @@ def torch_test():
     gpu_count = torch.cuda.device_count()
     cuda_version = torch.version.cuda
     if gpu_available:
-        print(f"GPU Detected")
+        print("GPU Detected")
         print(f"GPU:\t\t{gpu_name}")
         print(f"GPU count:\t{gpu_count}")
         print(f"CUDA version:\t{cuda_version}")
@@ -38,7 +38,7 @@ def torch_test():
         print(outputs)
         print("All tests done...")
     else:
-        print(f"No GPU Detected")
+        print("No GPU Detected")
     print("[END] Torch GPU Test\n")
 
 if __name__ == "__main__":

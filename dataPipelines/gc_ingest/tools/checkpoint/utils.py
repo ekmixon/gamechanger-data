@@ -27,9 +27,11 @@ class CheckpointManager:
         """
         self.checkpoint_file_path = checkpoint_file_path
         self.checkpointed_dir_path = (
-            checkpointed_dir_path if checkpointed_dir_path.endswith('/')
-            else checkpointed_dir_path + '/'
+            checkpointed_dir_path
+            if checkpointed_dir_path.endswith('/')
+            else f'{checkpointed_dir_path}/'
         )
+
         self.bucket_name = bucket_name
         self.s3u = S3Utils(Config.connection_helper, bucket=self.bucket_name)
         self.ready_marker = checkpoint_ready_marker
@@ -54,8 +56,7 @@ class CheckpointManager:
 
     @property
     def current_prefix(self) -> t.Optional[TimestampedPrefix]:
-        ts = self.current_checkpoint_ts
-        if ts:
+        if ts := self.current_checkpoint_ts:
             ts_str = ts.strftime(S3Utils.TIMESTAMP_FORMAT)
             return TimestampedPrefix(
                 prefix_path=self.checkpointed_dir_path + ts_str,
@@ -75,13 +76,18 @@ class CheckpointManager:
         self.current_prefix = self.current_prefix
 
     def is_prefix_ready_for_processing(self, prefix: t.Union[TimestampedPrefix, str]) -> bool:
-        if not self.ready_marker:
-            return True
-        else:
-            return self.s3u.object_exists(
-                self.s3u.format_as_prefix(prefix.prefix_path if isinstance(prefix, TimestampedPrefix) else prefix)
+        return (
+            self.s3u.object_exists(
+                self.s3u.format_as_prefix(
+                    prefix.prefix_path
+                    if isinstance(prefix, TimestampedPrefix)
+                    else prefix
+                )
                 + self.ready_marker
             )
+            if self.ready_marker
+            else True
+        )
 
     @property
     def all_prefixes(self) -> t.List[TimestampedPrefix]:
@@ -128,8 +134,7 @@ class CheckpointManager:
 
     @property
     def next_prefix(self) -> t.Optional[TimestampedPrefix]:
-        remaining_prefixes = self.remaining_prefixes
-        if remaining_prefixes:
+        if remaining_prefixes := self.remaining_prefixes:
             return remaining_prefixes[0]
         else:
             return None

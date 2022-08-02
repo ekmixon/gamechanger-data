@@ -48,16 +48,13 @@ def extract_syn(data_conf_filter: dict, data: dict):
     if signature_date:
         extracted_data_eda_n["signature_date_eda_ext_dt"] = signature_date
 
-    psc_on_contract_header = header_psc(data)
-    if psc_on_contract_header:
+    if psc_on_contract_header := header_psc(data):
         extracted_data_eda_n["psc_on_contract_header_eda_ext"] = psc_on_contract_header
 
-    is_award = False
-    if modification_number == "Award":
-        is_award = True
-
-    total_obligated_amount = populate_total_obligated_amount(data, is_award)
-    if total_obligated_amount:
+    is_award = modification_number == "Award"
+    if total_obligated_amount := populate_total_obligated_amount(
+        data, is_award
+    ):
         extracted_data_eda_n["total_obligated_amount_eda_ext_f"] = total_obligated_amount
 
     return {"extracted_data_eda_n": extracted_data_eda_n}
@@ -68,8 +65,7 @@ def populate_modification(data: dict):
 
     if "metadata_eda_ext_n" in data:
         metadata = data.get("metadata_eda_ext_n")
-        modification_number = metadata.get("modification_eda_ext")
-        if modification_number:
+        if modification_number := metadata.get("modification_eda_ext"):
             return modification_number
         else:
             return "Award"

@@ -39,7 +39,7 @@ class ElasticsearchPublisher:
         self.port = port
         self.mapping_file = mapping_file
         self.alias = alias
-        if "docker" == environment:
+        if environment == "docker":
             self.es = Elasticsearch(
                 [
                     {
@@ -50,7 +50,7 @@ class ElasticsearchPublisher:
                     }
                 ]
             )
-        elif "dev" == environment:
+        elif environment == "dev":
             self.es = Elasticsearch(
                 [
                     {
@@ -124,8 +124,8 @@ class ElasticsearchPublisher:
             )
 
         # results = queue.deque(load_gen, maxlen=0)
-        print("Number of Successfully index: " + str(count_success))
-        print("Number of Failed index: " + str(error_count))
+        print(f"Number of Successfully index: {str(count_success)}")
+        print(f"Number of Failed index: {str(error_count)}")
         print("Finished indexing json files")
 
     def create_index(self):
@@ -209,12 +209,10 @@ class ConfiguredElasticsearchPublisher(ElasticsearchPublisher):
 
         self.ingest_dir = ingest_dir
         self.index_name = index_name
-        if not mapping_file:
-            self.mapping_file = str(
-                os.path.join(RENDERED_DIR, "elasticsearch", "index.json")
-            )
-        else:
-            self.mapping_file = mapping_file
+        self.mapping_file = mapping_file or str(
+            os.path.join(RENDERED_DIR, "elasticsearch", "index.json")
+        )
+
         self.alias = alias
         self.es = Config.connection_helper.es_client
 
@@ -272,22 +270,26 @@ class ConfiguredEntityPublisher(ConfiguredElasticsearchPublisher):
 
         docs = []
         for i in self.agencies.index:
-            mydict = {}
-            mydict["name"] = self.agencies.loc[i, "entity_name"]
-            mydict["website"] = self.agencies.loc[i, "Website"]
-            mydict["address"] = self.agencies.loc[i, "Address"]
-            mydict["government_branch"] = self.agencies.loc[i, "Government_Branch"]
-            mydict["parent_agency"] = self.agencies.loc[i, "Parent_Agency"]
-            mydict["related_agency"] = self.agencies.loc[i, "Related_Agency"]
-            mydict["entity_type"] = self.agencies.loc[i, "entity_type"]
-            mydict["crawlers"] = self.agencies.loc[i, "crawlers"]
-            mydict["num_mentions"] = self.agencies.loc[i, "num_mentions"]
-            mydict["aliases"] = [
-                {"name": x} for x in self.agencies.loc[i, "Agency_Aliases"]
-            ]
-            mydict["information"] = self.agencies.loc[i, "information"]
-            mydict["information_source"] = self.agencies.loc[i, "information_source"]
-            mydict["information_retrieved"] = self.agencies.loc[i, "information_retrieved"]
+            mydict = {
+                "name": self.agencies.loc[i, "entity_name"],
+                "website": self.agencies.loc[i, "Website"],
+                "address": self.agencies.loc[i, "Address"],
+                "government_branch": self.agencies.loc[i, "Government_Branch"],
+                "parent_agency": self.agencies.loc[i, "Parent_Agency"],
+                "related_agency": self.agencies.loc[i, "Related_Agency"],
+                "entity_type": self.agencies.loc[i, "entity_type"],
+                "crawlers": self.agencies.loc[i, "crawlers"],
+                "num_mentions": self.agencies.loc[i, "num_mentions"],
+                "aliases": [
+                    {"name": x} for x in self.agencies.loc[i, "Agency_Aliases"]
+                ],
+                "information": self.agencies.loc[i, "information"],
+                "information_source": self.agencies.loc[i, "information_source"],
+                "information_retrieved": self.agencies.loc[
+                    i, "information_retrieved"
+                ],
+            }
+
             header = {"_index": self.index_name, "_source": mydict}
             docs.append(header)
 
@@ -318,6 +320,6 @@ class ConfiguredEntityPublisher(ConfiguredElasticsearchPublisher):
             )
 
         # results = queue.deque(load_gen, maxlen=0)
-        print("Number of Successfully index: " + str(count_success))
-        print("Number of Failed index: " + str(error_count))
+        print(f"Number of Successfully index: {str(count_success)}")
+        print(f"Number of Failed index: {str(error_count)}")
         print("Finished indexing json files")

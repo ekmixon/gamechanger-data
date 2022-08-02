@@ -10,7 +10,7 @@ def check_unique_service_names() -> None:
         with open(path, 'r') as f:
             d = yaml.load(f, yaml.CLoader)
             for name in d['services'].keys():
-                if not name in [n for n, p in service_names_and_paths]:
+                if name not in [n for n, p in service_names_and_paths]:
                     service_names_and_paths.append((name,path))
                 else:
                     dup_paths = [p for n, p in service_names_and_paths if n == name] + [path]

@@ -1,7 +1,7 @@
 import unittest as ut
 import os
 
-GPU_PRESENT = True if os.environ.get('GPU_PRESENT', '').lower() == 'yes' else False
+GPU_PRESENT = os.environ.get('GPU_PRESENT', '').lower() == 'yes'
 
 
 class TestPackageFunctions(ut.TestCase):

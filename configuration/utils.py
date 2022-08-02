@@ -31,11 +31,10 @@ def get_es_stopwords(stopwords_path: str = os.path.join(PACKAGE_PATH, 'elasticse
 
 def get_rendered_defaults() -> t.Dict[str, t.Any]:
     """Get dict of default values that are rendered in the <repo>/configuration/rendered/defaults.json"""
-    if RENDERED_DEFAULTS_PATH.exists():
-        with RENDERED_DEFAULTS_PATH.open("r") as f:
-            return json.load(f)
-    else:
+    if not RENDERED_DEFAULTS_PATH.exists():
         return {}
+    with RENDERED_DEFAULTS_PATH.open("r") as f:
+        return json.load(f)
 
 
 # TODO: refactor to just handle different URI schemes with a single argument,
@@ -50,7 +49,10 @@ def get_app_config(
                     APP_CONFIG ENV VAR Name <- APP_CONFIG RENDERED DEFAULTS Name <-
                         Hardcoded APP_CONFIG Default Name"""
     if explicit_app_config_name and explicit_ext_app_config_path:
-        raise ValueError(f"Cannot specify both types of app config explicitly, choose one (ext) or regular")
+        raise ValueError(
+            "Cannot specify both types of app config explicitly, choose one (ext) or regular"
+        )
+
 
     defaults_json = get_rendered_defaults()
 
@@ -85,7 +87,9 @@ def get_app_config(
         return final_conf
     else:
         # this should not ever be possible
-        raise RuntimeError(f"Encountered unreachable code branch while trying to resolve app config.")
+        raise RuntimeError(
+            "Encountered unreachable code branch while trying to resolve app config."
+        )
 
 
 def get_es_config(explicit_es_config_name: t.Optional[str] = None) -> t.Dict[str, t.Any]:
@@ -116,7 +120,9 @@ def get_es_config(explicit_es_config_name: t.Optional[str] = None) -> t.Dict[str
         return final_conf
     else:
         # this should not ever be possible
-        raise RuntimeError(f"Encountered unreachable code branch while trying to resolve es config.")
+        raise RuntimeError(
+            "Encountered unreachable code branch while trying to resolve es config."
+        )
 
 
 def get_connection_helper_from_env() -> ConnectionHelper:

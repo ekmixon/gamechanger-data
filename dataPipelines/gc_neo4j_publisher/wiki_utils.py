@@ -11,7 +11,7 @@ def flip_nums(text):
         return ''
 
     i = 0
-    s = text + '_'
+    s = f'{text}_'
     while text[i].isnumeric():
         s += text[i]
         i += 1
@@ -76,21 +76,18 @@ def get_infobox_info(item):
         link_arr = link_arr[1:]
     link = '_'.join(link_arr)
 
-    url = "https://en.wikipedia.org/wiki/" + link
+    url = f"https://en.wikipedia.org/wiki/{link}"
 
     # TODO: find a better workaround
     # try adding United States adn US in front of entities (like United States Army, USDOD)
-    second_url = 'https://en.wikipedia.org/wiki/United_States_' + link
-    third_url = 'https://en.wikipedia.org/wiki/US' + link
+    second_url = f'https://en.wikipedia.org/wiki/United_States_{link}'
+    third_url = f'https://en.wikipedia.org/wiki/US{link}'
 
-    result = get_infobox_from_link(url)
-    if not result:
-        result = get_infobox_from_link(second_url)
-
-    if not result:
-        result = get_infobox_from_link(third_url)
-
-    return result
+    return (
+        get_infobox_from_link(url)
+        or get_infobox_from_link(second_url)
+        or get_infobox_from_link(third_url)
+    )
 
 
 def get_infobox_from_link(link):
@@ -101,40 +98,31 @@ def get_infobox_from_link(link):
 
         soup = BeautifulSoup(response.content, 'html.parser')
         name = soup.find('h1', class_='firstHeading').text
-        table = soup.find('table', class_='infobox')
-        if table:
+        if table := soup.find('table', class_='infobox'):
             result['Last_Retrieved'] = datetime.utcnow().strftime('%Y/%m/%d-%H:%M:%S') + " UTC"
             result['Redirect_Name'] = name
             for tr in table.find_all('tr'):
                 if tr.find('th') and tr.find('td'):
                     info = tr.find('td')
-                    li = []
                     k = tr.find('th').text
                     k = clean_key(k)
 
                     if not k:
                         continue
 
-                    for el in info.find_all('li'):
-                        li.append(el.text)
-                    if not li:
-                        val = tr.find('td').text
-                    else:
-                        val = [el for el in li]
+                    li = [el.text for el in info.find_all('li')]
+                    val = list(li) if li else tr.find('td').text
+                    if r := clean_value(val):
+                        result[k] = r
 
-                    r = clean_value(val)
-                    if not r:
-                        continue
-
-                    result[k] = r
-
-                else:
-                    if tr.find('td'):
-                        if tr.find('td').find('a', class_='image'):
-                            if 'image' not in result:
-                                result['image'] = 'https:' + tr.find('td').find('a', class_='image').img['src']
+                elif (
+                    tr.find('td')
+                    and tr.find('td').find('a', class_='image')
+                    and 'image' not in result
+                ):
+                    result['image'] = 'https:' + tr.find('td').find('a', class_='image').img['src']
     except Exception as e:
-        print('error in getting page ' + link + ": " + str(e))
+        print(f'error in getting page {link}: {str(e)}')
 
     return result
 

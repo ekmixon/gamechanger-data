@@ -132,7 +132,7 @@ def check_connections():
     print('... checking ElasticSearch')
     status_tracker['es_ok'] = False
     try:
-        status_tracker['es_ok'] = True if ch.es_client.ping() else False
+        status_tracker['es_ok'] = bool(ch.es_client.ping())
     except Exception as e:
         print(e)
 

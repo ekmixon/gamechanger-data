@@ -20,7 +20,7 @@ class VersionedDocSchema:
     id = sa.Column(sa.Integer, primary_key=True)
 
     @declared_attr
-    def pub_id(cls):
+    def pub_id(self):
         return sa.Column(sa.Integer, sa.ForeignKey('publications.id'), nullable=False)
 
     name = sa.Column(sa.String(512), nullable=False)

@@ -31,7 +31,7 @@ def extract_d_B_Y(text: str):
             date_time_obj = datetime.datetime.strptime(simp_str, '%d %B %Y')
             date_list.append(date_time_obj)
         except ValueError:
-            print("Datetime had an issue extracting Date for " + str(simp_str))
+            print(f"Datetime had an issue extracting Date for {simp_str}")
 
     return date_list
 
@@ -61,7 +61,7 @@ def extract_d_B_Y_short(text: str):
             date_time_obj = datetime.datetime.strptime(simp_str, '%d %b %Y')
             date_list.append(date_time_obj)
         except ValueError:
-            print("Datetime had an issue extracting Date for " + str(simp_str))
+            print(f"Datetime had an issue extracting Date for {simp_str}")
 
     return date_list
 
@@ -85,7 +85,7 @@ def extract_B_d_Y(text: str):
             date_time_obj = datetime.datetime.strptime(simp_str, '%B %d %Y')
             date_list.append(date_time_obj)
         except ValueError:
-            print("Datetime had an issue extracting Date for " + str(simp_str))
+            print(f"Datetime had an issue extracting Date for {simp_str}")
 
     return date_list
 
@@ -115,7 +115,7 @@ def extract_B_d_Y_short(text: str):
             date_time_obj = datetime.datetime.strptime(simp_str, '%b %d %Y')
             date_list.append(date_time_obj)
         except ValueError:
-            print("Datetime had an issue extracting Date for " + str(simp_str))
+            print(f"Datetime had an issue extracting Date for {simp_str}")
 
     return date_list
 
@@ -158,5 +158,4 @@ def add_dates_list(doc_dict):
 
 
 def process(doc_dict):
-    dates_dict = add_dates_list(doc_dict)
-    return dates_dict
+    return add_dates_list(doc_dict)

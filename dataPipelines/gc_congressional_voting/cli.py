@@ -21,7 +21,7 @@ def run(staging_folder: str) -> None:
 
     legislation_base_url = "https://s3.amazonaws.com/pp-projects-static/congress/bills/"
 
-    congress_list = [x+93 for x in range(0,23)] # Starting with the 93rd Congress
+    congress_list = [x+93 for x in range(23)]
 
     for congress in congress_list:
 
@@ -31,7 +31,7 @@ def run(staging_folder: str) -> None:
 
         with open(staging_folder + str(congress) + ".zip", "wb") as leg_dataset:
             leg_dataset.write(r.content)
-        filename = str(congress) + ".zip"
+        filename = f"{str(congress)}.zip"
         filename_hash = hashlib.md5(filename.encode()).hexdigest()
         manifest_dic = {
             "entry_type": "file",

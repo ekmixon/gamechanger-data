@@ -129,12 +129,13 @@ class LoadManager:
                 return None
 
             local_path = Path(metadata_dir, raw_doc.name + self.METADATA_DOC_EXTENSION)
-            if not local_path.is_file():
-                return None
-
-            return IngestableMetadataDoc(
-                local_path=local_path,
-                metadata=Document.from_dict(json.load(local_path.open("r")))
+            return (
+                IngestableMetadataDoc(
+                    local_path=local_path,
+                    metadata=Document.from_dict(json.load(local_path.open("r"))),
+                )
+                if local_path.is_file()
+                else None
             )
 
         def _get_corresponding_parsed_idoc(raw_doc: Path, parsed_dir: t.Optional[Path]) -> t.Optional[IngestableParsedDoc]:
@@ -142,11 +143,10 @@ class LoadManager:
                 return None
 
             local_path = Path(parsed_dir, raw_doc.stem + self.PARSED_DOC_EXTENSION)
-            if not local_path.is_file():
-                return None
-
-            return IngestableParsedDoc(
-                local_path=local_path
+            return (
+                IngestableParsedDoc(local_path=local_path)
+                if local_path.is_file()
+                else None
             )
 
         def _get_corresponding_thumbnail_idoc(raw_doc: Path, thumbnail_dir: t.Optional[Path]) -> t.Optional[IngestableThumbnailDoc]:
@@ -154,11 +154,10 @@ class LoadManager:
                 return None
 
             local_path = Path(thumbnail_dir, raw_doc.stem + self.THUMBNAIL_EXTENSION)
-            if not local_path.is_file():
-                return None
-
-            return IngestableThumbnailDoc(
-                local_path=local_path
+            return (
+                IngestableThumbnailDoc(local_path=local_path)
+                if local_path.is_file()
+                else None
             )
 
         for raw_doc_path in (
@@ -212,20 +211,21 @@ class LoadManager:
                     continue
 
                 metadata = idg.metadata_idoc.metadata
-                existing_doc = VersionedDoc.get_existing_from_doc(doc=metadata, session=session)
-                if existing_doc:
+                if existing_doc := VersionedDoc.get_existing_from_doc(
+                    doc=metadata, session=session
+                ):
                     session.add(existing_doc)
-                else:
-                    pub = Publication.get_or_create_from_document(doc=metadata, session=session)
-                    if pub:
-                        vdoc = VersionedDoc.create_from_document(
-                            doc=metadata,
-                            pub=pub,
-                            filename=idg.raw_idoc.local_path.name,
-                            doc_location=idg.raw_idoc.s3_path or "",
-                            batch_timestamp=ts
-                        )
-                        session.add(vdoc)
+                elif pub := Publication.get_or_create_from_document(
+                    doc=metadata, session=session
+                ):
+                    vdoc = VersionedDoc.create_from_document(
+                        doc=metadata,
+                        pub=pub,
+                        filename=idg.raw_idoc.local_path.name,
+                        doc_location=idg.raw_idoc.s3_path or "",
+                        batch_timestamp=ts
+                    )
+                    session.add(vdoc)
             session.commit()
 
     def upload_docs_to_s3(self,

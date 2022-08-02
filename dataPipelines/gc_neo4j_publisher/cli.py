@@ -67,6 +67,6 @@ def run(njm: Neo4jJobManager, source: str, clear: bool, max_threads: int, withou
         clear=clear,
         max_threads=max_threads,
         without_web_scraping=without_web_scraping,
-        scrape_wiki=(without_web_scraping == False),
-        infobox_dir=infobox_dir
+        scrape_wiki=not without_web_scraping,
+        infobox_dir=infobox_dir,
     )

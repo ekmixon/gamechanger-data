@@ -14,10 +14,7 @@ def parse_timestamp(ts: t.Union[str, datetime.datetime], raise_parse_error: bool
 
         try:
             ts = pandas.to_datetime(ts).to_pydatetime()
-            if str(ts) == 'NaT':
-                return None
-            else:
-                return ts
+            return None if str(ts) == 'NaT' else ts
         except:
             return None
 

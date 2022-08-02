@@ -5,12 +5,11 @@ from common.utils.file_utils import is_pdf, is_ocr_pdf, is_encrypted_pdf
 
 
 def is_pdf_file(f_name) -> bool:
-    if Path(f_name).suffix == ".pdf" or (filetype.guess(str(f_name)) is not None and
-         (filetype.guess(str(f_name)).mime == "pdf" or
-          filetype.guess(str(f_name)).mime == "application/pdf")):
-        return True
-    else:
-        return False
+    return (
+        Path(f_name).suffix == ".pdf"
+        or filetype.guess(str(f_name)) is not None
+        and filetype.guess(str(f_name)).mime in ["pdf", "application/pdf"]
+    )
 
 def get_ocr_filename(f_name, num_ocr_threads=2,force_ocr=False) -> str:
     if is_pdf_file(f_name):

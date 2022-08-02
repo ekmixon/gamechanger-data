@@ -11,9 +11,18 @@ class ManualMetadata:
         self.input_directory = input_directory
         self.document_group = document_group
         p = Path(self.input_directory).glob("**/*")
-        self.files = [x for x in p if x.is_file() and (str(x).endswith("pdf") or str(x).endswith("html")
-                                                  or (filetype.guess(str(x)) is not None and (
-                            filetype.guess(str(x)).mime == "pdf" or filetype.guess(str(x)).mime == "application/pdf")))]
+        self.files = [
+            x
+            for x in p
+            if x.is_file()
+            and (
+                str(x).endswith("pdf")
+                or str(x).endswith("html")
+                or filetype.guess(str(x)) is not None
+                and filetype.guess(str(x)).mime in ["pdf", "application/pdf"]
+            )
+        ]
+
         self.metadata_files = [Path(x).stem for x in p if x.is_file() and filetype.guess(str(x)) is not None and (
                 filetype.guess(str(x)).mime == "metadata")]
 
@@ -53,17 +62,18 @@ class ManualMetadata:
         return doc
 
     def create_metadata(self):
-        if self.document_group in Accepted_document_groups:
-            for file in self.files:
-                print(self.metadata_files)
-                if Path(file).stem not in self.metadata_files:
-                    doc = self.create_document(file)
+        if self.document_group not in Accepted_document_groups:
+            return
+        for file in self.files:
+            print(self.metadata_files)
+            if Path(file).stem not in self.metadata_files:
+                doc = self.create_document(file)
 
-                    outname = str(file) + '.metadata'
-                    print(outname)
-                    if doc:
-                        with open(outname, "w") as f:
-                            f.write(doc.to_json())
+                outname = f'{str(file)}.metadata'
+                print(outname)
+                if doc:
+                    with open(outname, "w") as f:
+                        f.write(doc.to_json())
 
 
 

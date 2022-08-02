@@ -17,7 +17,7 @@ def RepresentsInt(s):
 def readform(fname):
  
     pdf = pikepdf.open(fname)
-    tempfile = "TEMP_" + uuid.uuid4().hex[:6].upper() + ".pdf"
+    tempfile = f"TEMP_{uuid.uuid4().hex[:6].upper()}.pdf"
     pdf.save(tempfile)
 
     pdfobject=open(tempfile,'rb')
@@ -25,61 +25,56 @@ def readform(fname):
     os.remove(tempfile)
     a = pdf.getFields()
 
-    extension = ""
     info_dict = {}
 
-    if 'usersign[0]' in a.keys():
-        extension = "[0]"
-    elif 'usersign' in a.keys():
-        pass
-
+    extension = "[0]" if 'usersign[0]' in a.keys() else ""
     try:
-        person_name = a["username"+extension]['/V']['/Name']
+        person_name = a[f"username{extension}"]['/V']['/Name']
     except:
         person_name = ""
 
     try:
-        person_id = a["usersign"+extension]['/V']['/Name']
+        person_id = a[f"usersign{extension}"]['/V']['/Name']
     except:
         person_id = ""
 
     try:
-        sec_man_id = a["sec_mgr_sign"+extension]['/V']['/Name']
+        sec_man_id = a[f"sec_mgr_sign{extension}"]['/V']['/Name']
     except:
         sec_man_id = ""
 
     try:
-        supv_id = a["supvsign"+extension]['/V']['/Name']
+        supv_id = a[f"supvsign{extension}"]['/V']['/Name']
     except:
         supv_id = ""
 
     try:
-        user_id = a["userid"+extension]['/V']
+        user_id = a[f"userid{extension}"]['/V']
     except:
         user_id = ""
-    
+
     try:
-        reqorg = a["reqorg"+extension]['/V']
+        reqorg = a[f"reqorg{extension}"]['/V']
     except:
         reqorg = ""
 
     try:
-        reqsymb= a["reqsymb"+extension]['/V']
+        reqsymb = a[f"reqsymb{extension}"]['/V']
     except:
         reqsymb = ""
 
     try:
-        reqemail = a["reqemail"+extension]['/V']
+        reqemail = a[f"reqemail{extension}"]['/V']
     except:
         reqemail = ""
 
     try:
-        trngdate = a["trngdate"+extension]['/V']
+        trngdate = a[f"trngdate{extension}"]['/V']
     except:
         trngdate = ""
 
     try:
-        name = a["name"+extension]['/V']
+        name = a[f"name{extension}"]['/V']
     except:
         name = ""
 
@@ -110,16 +105,17 @@ def readform(fname):
         info_dict['SupV EDIPI'] = int(supv_id.split(".")[-1])
     else:
         info_dict['SupV EDIPI'] = None
-    
+
     return info_dict
 
 def process_dir(pathname):
 
-    meta_list = []
+    meta_list = [
+        readform(doc)
+        for doc in list(pathname.glob('**/*'))
+        if doc.is_file() and doc.suffix == '.pdf'
+    ]
 
-    for doc in list(pathname.glob('**/*')):
-        if doc.is_file() and doc.suffix == '.pdf':
-            meta_list.append(readform(doc))
 
     write_to_file(meta_list)
 
@@ -135,7 +131,7 @@ def process_file(fname):
 def write_to_file(data):
 
     csv_columns = list(data[0].keys())
-    outfile = "Report_" + uuid.uuid4().hex[:6].upper() + ".csv"
+    outfile = f"Report_{uuid.uuid4().hex[:6].upper()}.csv"
     with open(outfile, 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
         writer.writeheader()

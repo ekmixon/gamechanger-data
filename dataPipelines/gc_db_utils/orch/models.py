@@ -43,8 +43,7 @@ class Publication(AutoRepr, PublicationSchema, DeferredOrchReflectedBase):
 
     @staticmethod
     def get_existing_from_doc(doc: Document, session: Session) -> Optional['Publication']:
-        existing_pub = session.query(Publication).filter_by(name=doc.doc_name).one_or_none()
-        return existing_pub
+        return session.query(Publication).filter_by(name=doc.doc_name).one_or_none()
 
     @staticmethod
     def get_or_create_from_document(doc: Document, session: Session) -> 'Publication':
@@ -126,10 +125,8 @@ class SnapshotViewEntry(AutoRepr, SnapshotEntrySchema, DeferredOrchReflectedBase
 class CrawlerStatusEntry(AutoRepr, CrawlerStatusSchema, DeferredOrchReflectedBase):
     __tablename__ = 'crawler_status'
 
-    def create(status: str, crawler_name: str, datetime=dt.datetime) -> 'CrawlerStatusEntry':
+    def create(self, crawler_name: str, datetime=dt.datetime) -> 'CrawlerStatusEntry':
         """Generate Publication from Document obj."""
         return CrawlerStatusEntry(
-            status=status,
-            crawler_name=crawler_name,
-            datetime=datetime
+            self=self, crawler_name=crawler_name, datetime=datetime
         )

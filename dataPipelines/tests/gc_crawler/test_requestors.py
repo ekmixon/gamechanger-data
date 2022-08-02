@@ -49,4 +49,4 @@ def test_file_based_pseudo_requestor():
         source_sample_dir_path=dataPipelines.gc_crawler.example.SOURCE_SAMPLE_DIR,
     )
 
-    assert requestor.get_text(base_url + "/ping.html").strip() == "pong"
+    assert requestor.get_text(f"{base_url}/ping.html").strip() == "pong"

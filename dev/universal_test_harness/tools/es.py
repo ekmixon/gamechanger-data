@@ -37,13 +37,13 @@ def purge(purge_choice: str):
 
     def purge_aliases():
         print("Purging aliases ::")
-        for alias in [a for a in aliases if not any([pattern in a for pattern in exclude_patterns])]:
+        for alias in [a for a in aliases if all(pattern not in a for pattern in exclude_patterns)]:
             print(f'Deleting alias :: {alias}')
             es.indices.delete_alias(index='_all', name=alias)
 
     def purge_indices():
         print("Puring indices")
-        for index in [i for i in indices if not any([pattern in i for pattern in exclude_patterns])]:
+        for index in [i for i in indices if all(pattern not in i for pattern in exclude_patterns)]:
             print(f'Deleting index :: {index}')
             es.indices.delete(index=index)
 

@@ -11,7 +11,7 @@ def test_json_schema():
     with tempfile.TemporaryDirectory() as tmpdir:
 
         test_pdf_path = Path(PACKAGE_OCR_PDF_PATH, "acg_100.fake.pdf")
-        test_json_path = Path(tmpdir, test_pdf_path.stem + ".json")
+        test_json_path = Path(tmpdir, f"{test_pdf_path.stem}.json")
 
         src_dir_path = Path(tmpdir).resolve()
         dst_dir_path = Path(tmpdir).resolve()

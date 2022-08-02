@@ -6,23 +6,19 @@ from gamechangerml.src.utilities.text_utils import utf8_pass, clean_text
 
 
 def get_paragraph_text(segmented):
-    par_text = ""
-
-    for sentence in segmented:
-        sentence_text = " ".join(
-            [token.value for token in sentence]
-        )
-        par_text += sentence_text
-
-    return par_text
+    return "".join(
+        " ".join([token.value for token in sentence]) for sentence in segmented
+    )
 
 
 def create_paragraph_dict(page_num, paragraph_num, paragraph_text, doc_dict):
-    par = {}
-    par["type"] = "paragraph"
-    par["filename"] = doc_dict["filename"]
-    par["par_inc_count"] = doc_dict["par_count_i"]
-    par["id"] = doc_dict["filename"] + "_" + str(doc_dict["par_count_i"])
+    par = {
+        "type": "paragraph",
+        "filename": doc_dict["filename"],
+        "par_inc_count": doc_dict["par_count_i"],
+        "id": doc_dict["filename"] + "_" + str(doc_dict["par_count_i"]),
+    }
+
     doc_dict["par_count_i"] += 1
     par["par_count_i"] = paragraph_num
     par["page_num_i"] = page_num

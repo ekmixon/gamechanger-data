@@ -63,12 +63,10 @@ def get(cpm: CheckpointManager, checkpoint_choice: str, limit: int):
 
     prefixes = []
     if checkpoint_choice == 'current':
-        prefix = cpm.current_prefix
-        if prefix:
+        if prefix := cpm.current_prefix:
             prefixes.append(prefix)
     elif checkpoint_choice == 'next':
-        prefix = cpm.next_prefix
-        if prefix:
+        if prefix := cpm.next_prefix:
             prefixes.append(prefix)
     else:
         prefixes = cpm.remaining_prefixes[:limit if limit > 0 else None]
@@ -123,17 +121,17 @@ def pull(cpm: CheckpointManager,
     """Pull checkpoint to local disk"""
     if checkpoint_choice == 'next':
         with cpm.checkpoint_download_manager(
-            base_download_dir=output_dir,
-            advance_checkpoint=advance_checkpoint,
-            limit=1
-        ) as downloaded_prefixes:
+                    base_download_dir=output_dir,
+                    advance_checkpoint=advance_checkpoint,
+                    limit=1
+                ) as downloaded_prefixes:
             for dp in downloaded_prefixes:
-                print(str(dp.local_path.resolve()))
+                print(dp.local_path.resolve())
     else:
         with cpm.checkpoint_download_manager(
-            base_download_dir=output_dir,
-            advance_checkpoint=advance_checkpoint,
-            limit=limit if limit > 0 else None
-        ) as downloaded_prefixes:
+                    base_download_dir=output_dir,
+                    advance_checkpoint=advance_checkpoint,
+                    limit=limit if limit > 0 else None
+                ) as downloaded_prefixes:
             for dp in downloaded_prefixes:
-                print(str(dp.local_path.resolve()))
+                print(dp.local_path.resolve())

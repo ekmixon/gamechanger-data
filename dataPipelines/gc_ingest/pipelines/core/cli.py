@@ -80,7 +80,7 @@ def core_checkpoint_ingest(core_ingest_config: CoreIngestConfig, **kwargs):
     cig = CheckpointIngestConfig.from_core_config(core_config=core_ingest_config, other_config_kwargs=kwargs)
 
     announce("Aggregating files for processing ...")
-    announce(f"Aggregating files from checkpoints ...")
+    announce("Aggregating files from checkpoints ...")
     last_prefix: t.Optional[TimestampedPrefix] = None
     with cig.checkpoint_manager.checkpoint_download_manager(
         base_download_dir=cig.download_base_dir,
